@@ -127,6 +127,7 @@
                             <button id="btn-start" onclick="toggleGame('start')" class="flex-1 sm:flex-none bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-medium transition-colors">Start Game</button>
                             <button id="btn-stop" onclick="toggleGame('stop')" class="flex-1 sm:flex-none bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded-lg font-medium transition-colors hidden">Stop Game</button>
                             <button onclick="resetGame()" class="flex-1 sm:flex-none bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">Reset</button>
+                            <button onclick="seedQuestions()" class="flex-1 sm:flex-none bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg font-medium transition-colors" title="Load the 5 image questions">Load GitHub Images</button>
                         </div>
                     </div>
                 </div>
@@ -472,15 +473,41 @@
             const seq = parseInt(document.getElementById('q-seq').value);
             const type = document.getElementById('q-type').value;
             const content = document.getElementById('q-content').value;
-            const answer = document.getElementById('q-answer').value.toLowerCase().trim();
+            const answer = document.getElementById('q-answer').value.toUpperCase().trim();
 
             try {
-                await supabase.from('questions').insert([{ seq, type, content, answer }]);
+                const { error } = await supabase.from('questions').insert([{ seq, type, content, answer }]);
+                if (error) {
+                    console.error("Insert error:", error);
+                    alertCustom("Failed to save: " + error.message + " (Make sure your Supabase tables are created)");
+                    return;
+                }
                 document.getElementById('form-add-q').reset();
                 document.getElementById('q-seq').value = seq + 1;
             } catch(err) {
                 console.error("Add Q Error", err);
                 alertCustom("Failed to add question.");
+            }
+        };
+
+        window.seedQuestions = async () => {
+            const defaultQ = [
+                { seq: 1, type: 'image', content: '1.png', answer: 'DHARMENDRA PRADHAN' },
+                { seq: 2, type: 'image', content: '2.png', answer: 'NATIONAL TESTING AGENCY' },
+                { seq: 3, type: 'image', content: '3.png', answer: 'CJP' },
+                { seq: 4, type: 'image', content: '4.png', answer: 'CULTUS' },
+                { seq: 5, type: 'image', content: '5.png', answer: "DATO' SERI ANWAR BIN IBRAHIM" }
+            ];
+            
+            try {
+                const { error } = await supabase.from('questions').insert(defaultQ);
+                if (error) {
+                    alertCustom("Failed to load images: " + error.message);
+                } else {
+                    alertCustom("Successfully loaded all 5 GitHub image questions!");
+                }
+            } catch(err) {
+                console.error("Seed error", err);
             }
         };
 
@@ -582,7 +609,7 @@
             if (gameState.status !== 'active') return;
 
             const input = document.getElementById('part-answer-input');
-            const userAnswer = input.value.toLowerCase().trim();
+            const userAnswer = input.value.toUpperCase().trim();
             const currentQ = allQuestions.find(q => q.seq === teamState.currentQuestionSeq);
 
             if (!currentQ) {
@@ -590,7 +617,7 @@
                 return;
             }
 
-            if (userAnswer === currentQ.answer) {
+            if (userAnswer === currentQ.answer.toUpperCase().trim()) {
                 input.value = '';
                 const nextSeq = teamState.currentQuestionSeq + 1;
                 
