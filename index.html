@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Hunt</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Slate 900 */
+            color: #f8fafc; /* Slate 50 */
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5); 
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569; 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #64748b; 
+        }
+        /* Loader */
+        .loader {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-bottom-color: #3b82f6;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative overflow-hidden">
+    
+    <!-- Background Accents -->
+    <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-20 pointer-events-none"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-20 pointer-events-none"></div>
+
+    <!-- Custom Modal for Alerts (Replaces alert()) -->
+    <div id="custom-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div class="glass-panel p-6 rounded-2xl max-w-sm w-full shadow-2xl transform transition-all scale-95 opacity-0" id="custom-modal-content">
+            <h3 id="modal-title" class="text-xl font-bold mb-2 text-white">Notice</h3>
+            <p id="modal-message" class="text-slate-300 mb-6">Message goes here.</p>
+            <button onclick="closeModal()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                Got it
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-slate-900">
+        <div class="loader w-12 h-12 mb-4"></div>
+        <p class="text-slate-400 font-medium tracking-wide animate-pulse">Connecting to Server...</p>
+    </div>
+
+    <!-- Screen 1: Login -->
+    <div id="screen-login" class="flex-1 flex items-center justify-center p-4 z-10 hidden">
+        <div class="glass-panel p-8 rounded-2xl w-full max-w-md shadow-2xl text-center">
+            <div class="mb-8">
+                <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-2">Quiz Hunt</h1>
+                <p class="text-slate-400">Select your role to continue</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="flex flex-col gap-2">
+                    <input type="password" id="admin-password" placeholder="Admin Password" class="w-full bg-slate-800 border border-slate-600 text-white px-4 py-2 rounded-xl focus:outline-none focus:border-blue-500 shadow-inner">
+                    <button onclick="login('admin')" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-semibold py-3 px-4 rounded-xl transition-all shadow-lg hover:shadow-blue-900/20 group flex justify-between items-center">
+                        <span>Admin Login</span>
+                        <span class="text-slate-500 group-hover:text-blue-400 transition-colors">→</span>
+                    </button>
+                </div>
+                
+                <div class="relative py-2">
+                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-700"></div></div>
+                    <div class="relative flex justify-center"><span class="bg-[#0f172a] px-4 text-sm text-slate-500">Participants</span></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="login('A')" class="bg-blue-900/40 hover:bg-blue-800/60 border border-blue-700/50 text-blue-100 font-medium py-3 rounded-xl transition-all">Team A</button>
+                    <button onclick="login('B')" class="bg-green-900/40 hover:bg-green-800/60 border border-green-700/50 text-green-100 font-medium py-3 rounded-xl transition-all">Team B</button>
+                    <button onclick="login('C')" class="bg-purple-900/40 hover:bg-purple-800/60 border border-purple-700/50 text-purple-100 font-medium py-3 rounded-xl transition-all">Team C</button>
+                    <button onclick="login('D')" class="bg-orange-900/40 hover:bg-orange-800/60 border border-orange-700/50 text-orange-100 font-medium py-3 rounded-xl transition-all">Team D</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 2: Admin Dashboard -->
+    <div id="screen-admin" class="flex-1 flex flex-col h-screen hidden z-10">
+        <header class="glass-panel px-6 py-4 flex justify-between items-center border-b-0 border-slate-700">
+            <h1 class="text-xl font-bold text-white">Admin Dashboard</h1>
+            <div class="flex items-center gap-4">
+                <div id="admin-status-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-700 text-slate-300">Waiting</div>
+                <button onclick="logout()" class="text-sm text-slate-400 hover:text-white transition-colors">Logout</button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-hidden flex flex-col md:flex-row max-w-7xl w-full mx-auto p-4 gap-6">
+            
+            <!-- Left Col: Controls & Questions -->
+            <div class="flex-1 flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2">
+                
+                <!-- Game Controls -->
+                <div class="glass-panel p-6 rounded-2xl">
+                    <h2 class="text-lg font-semibold mb-4 border-b border-slate-700 pb-2">Game Controls</h2>
+                    <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                        <div>
+                            <p class="text-sm text-slate-400 mb-1">Time Limit: 60 Minutes</p>
+                            <p id="admin-timer" class="text-2xl font-mono font-bold text-blue-400">00:00</p>
+                        </div>
+                        <div class="flex gap-3 w-full sm:w-auto">
+                            <button id="btn-start" onclick="toggleGame('start')" class="flex-1 sm:flex-none bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-medium transition-colors">Start Game</button>
+                            <button id="btn-stop" onclick="toggleGame('stop')" class="flex-1 sm:flex-none bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded-lg font-medium transition-colors hidden">Stop Game</button>
+                            <button onclick="resetGame()" class="flex-1 sm:flex-none bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">Reset</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Question Form -->
+                <div class="glass-panel p-6 rounded-2xl">
+                    <h2 class="text-lg font-semibold mb-4 border-b border-slate-700 pb-2">Add New Question</h2>
+                    <form id="form-add-q" class="space-y-4" onsubmit="handleAddQuestion(event)">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm text-slate-400 mb-1">Question Number</label>
+                                <input type="number" id="q-seq" required min="1" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-slate-400 mb-1">Media Type</label>
+                                <select id="q-type" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+                                    <option value="text">Text Only</option>
+                                    <option value="image">Image URL</option>
+                                    <option value="video">Video URL (mp4)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">Question Content / URL</label>
+                            <textarea id="q-content" required rows="3" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 placeholder-slate-600" placeholder="Type question or paste image/video URL..."></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">Exact Answer</label>
+                            <input type="text" id="q-answer" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 placeholder-slate-600" placeholder="e.g. Paris">
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 rounded-lg transition-colors">Add Question</button>
+                    </form>
+                </div>
+
+                <!-- Existing Questions List -->
+                <div class="glass-panel p-6 rounded-2xl">
+                    <h2 class="text-lg font-semibold mb-4 border-b border-slate-700 pb-2">Question Bank</h2>
+                    <div id="admin-q-list" class="space-y-3">
+                        <!-- Filled by JS -->
+                        <p class="text-slate-500 text-sm">Loading questions...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Col: Live Feed -->
+            <div class="w-full md:w-80 glass-panel rounded-2xl flex flex-col overflow-hidden h-[60vh] md:h-auto">
+                <div class="p-4 border-b border-slate-700 bg-slate-800/50">
+                    <h2 class="text-lg font-semibold flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        Live Progress Feed
+                    </h2>
+                </div>
+                <div id="admin-logs" class="flex-1 p-4 overflow-y-auto custom-scrollbar space-y-3">
+                    <!-- Filled by JS -->
+                    <p class="text-slate-500 text-sm text-center mt-4">No activity yet</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 3: Participant View -->
+    <div id="screen-participant" class="flex-1 flex flex-col h-screen hidden z-10">
+        <!-- Header -->
+        <header class="glass-panel px-4 sm:px-6 py-4 flex justify-between items-center sticky top-0 z-20">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xl font-bold shadow-lg" id="team-avatar">A</div>
+                <div>
+                    <h1 class="font-bold text-white leading-tight">Team <span id="team-name-display">A</span></h1>
+                    <p class="text-xs text-slate-400">Participant</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="glass-panel px-4 py-2 rounded-lg border border-slate-600/50 flex flex-col items-end">
+                    <span class="text-[10px] uppercase tracking-wide text-slate-400 font-semibold">Time Remaining</span>
+                    <span id="participant-timer" class="text-xl sm:text-2xl font-mono font-bold text-white tabular-nums">--:--</span>
+                </div>
+                <button onclick="logout()" class="text-sm text-slate-400 hover:text-white transition-colors hidden sm:block">Exit</button>
+            </div>
+        </header>
+
+        <main class="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 overflow-y-auto custom-scrollbar">
+            
+            <!-- State: Waiting for Admin -->
+            <div id="part-state-waiting" class="glass-panel p-8 rounded-2xl max-w-md w-full text-center hidden">
+                <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-700">
+                    <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <h2 class="text-2xl font-bold mb-2">Game Not Started</h2>
+                <p class="text-slate-400">Please wait for the admin to start the timer. Get ready!</p>
+            </div>
+
+            <!-- State: Finished/Time Up -->
+            <div id="part-state-finished" class="glass-panel p-8 rounded-2xl max-w-md w-full text-center hidden">
+                <div class="w-16 h-16 bg-blue-900/50 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/50">
+                    <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <h2 class="text-2xl font-bold mb-2">Quiz Finished</h2>
+                <p class="text-slate-400">The time is up or the admin has ended the session. Great effort!</p>
+            </div>
+
+            <!-- State: Active Question -->
+            <div id="part-state-active" class="w-full max-w-2xl hidden flex-col gap-6">
+                <!-- Progress Indicator -->
+                <div class="flex items-center justify-between text-sm font-medium text-slate-400 mb-2 px-2">
+                    <span id="q-counter-display">Question 1</span>
+                    <span class="text-blue-400" id="q-status-msg"></span>
+                </div>
+
+                <!-- Question Card -->
+                <div class="glass-panel p-1 rounded-2xl overflow-hidden shadow-2xl border-t border-slate-600/50">
+                    <div class="bg-slate-800/80 p-6 sm:p-8 rounded-xl flex flex-col gap-6">
+                        
+                        <!-- Media Container -->
+                        <div id="part-media-container" class="w-full bg-slate-900 rounded-lg overflow-hidden flex items-center justify-center min-h-[150px] border border-slate-700 hidden">
+                            <!-- Injected via JS -->
+                        </div>
+
+                        <!-- Text Content -->
+                        <div id="part-text-content" class="text-lg sm:text-xl text-white font-medium leading-relaxed">
+                            Loading question...
+                        </div>
+
+                        <hr class="border-slate-700">
+
+                        <!-- Answer Form -->
+                        <form id="form-answer" onsubmit="handleAnswerSubmit(event)" class="flex flex-col sm:flex-row gap-3">
+                            <input type="text" id="part-answer-input" autocomplete="off" placeholder="Enter your answer..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-lg shadow-inner placeholder-slate-600">
+                            <button type="submit" class="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg hover:shadow-blue-500/25 active:scale-95">
+                                Submit
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Env Variables Handling
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'quiz-hunt-default';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            // Mock config for syntax completeness, real one provided by environment
+            apiKey: "mock-key", projectId: "mock-project"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // State Variables
+        let currentUserRole = null; // 'admin', 'A', 'B', 'C', 'D'
+        let currentUserId = null;
+        
+        let allQuestions = [];
+        let allLogs = [];
+        let gameState = { status: 'waiting', startTime: null };
+        let teamState = { currentQuestionSeq: 1 };
+        
+        let unsubGameState = null;
+        let unsubQuestions = null;
+        let unsubLogs = null;
+        let unsubTeam = null;
+
+        let timerInterval = null;
+        const TIME_LIMIT_MS = 60 * 60 * 1000; // 60 minutes
+
+        // Helper to get strictly scoped path
+        const getPublicPath = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
+        const getPublicDoc = (col, docId) => doc(db, 'artifacts', appId, 'public', 'data', col, docId);
+
+        // Modal Functions
+        window.showModal = (title, message) => {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-message').textContent = message;
+            const modal = document.getElementById('custom-modal');
+            const content = document.getElementById('custom-modal-content');
+            modal.classList.remove('hidden');
+            // Animate in
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        };
+
+        window.closeModal = () => {
+            const modal = document.getElementById('custom-modal');
+            const content = document.getElementById('custom-modal-content');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 200);
+        };
+
+        window.alertCustom = (msg) => window.showModal("Alert", msg);
+
+        // UI View Toggling
+        const showScreen = (screenId) => {
+            ['screen-login', 'screen-admin', 'screen-participant'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            if(screenId) document.getElementById(screenId).classList.remove('hidden');
+        };
+
+        const hideLoading = () => {
+            document.getElementById('loading-overlay').classList.add('hidden');
+        };
+        const showLoading = () => {
+            document.getElementById('loading-overlay').classList.remove('hidden');
+        };
+
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined') {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                currentUserId = auth.currentUser.uid;
+                hideLoading();
+                showScreen('screen-login');
+            } catch (err) {
+                console.error("Auth Error:", err);
+                alertCustom("Failed to connect to authentication server.");
+                hideLoading();
+            }
+        }
+
+        // Wait for page load to start auth
+        window.onload = initAuth;
+
+        // Login Logic
+        window.login = async (role) => {
+            if (role === 'admin') {
+                const passwordInput = document.getElementById('admin-password');
+                if (passwordInput.value !== 'admin@2026') {
+                    alertCustom("Incorrect admin password.");
+                    return;
+                }
+                passwordInput.value = ''; // Clear password on success
+                currentUserRole = role;
+                showScreen('screen-admin');
+                setupAdminListeners();
+            } else {
+                currentUserRole = role;
+                showScreen('screen-participant');
+                document.getElementById('team-name-display').textContent = role;
+                document.getElementById('team-avatar').textContent = role;
+                await setupParticipantState(role);
+                setupParticipantListeners(role);
+            }
+        };
+
+        window.logout = () => {
+            // Cleanup listeners
+            if(unsubGameState) unsubGameState();
+            if(unsubQuestions) unsubQuestions();
+            if(unsubLogs) unsubLogs();
+            if(unsubTeam) unsubTeam();
+            if(timerInterval) clearInterval(timerInterval);
+            
+            currentUserRole = null;
+            showScreen('screen-login');
+        };
+
+        // -- Listeners -- 
+        function listenToGameState() {
+            if(unsubGameState) unsubGameState();
+            const stateRef = getPublicDoc('core', 'gameState');
+            unsubGameState = onSnapshot(stateRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    gameState = docSnap.data();
+                } else {
+                    gameState = { status: 'waiting', startTime: null };
+                    // Initialize if empty
+                    if(currentUserRole === 'admin') setDoc(stateRef, gameState);
+                }
+                updateGlobalTimerUI();
+                if(currentUserRole === 'admin') renderAdminStatus();
+                else renderParticipantView();
+            }, (err) => console.error("GameState Listen Error", err));
+        }
+
+        function listenToQuestions(callback) {
+            if(unsubQuestions) unsubQuestions();
+            const qRef = getPublicPath('questions');
+            unsubQuestions = onSnapshot(qRef, (snap) => {
+                const qs = [];
+                snap.forEach(doc => qs.push({ id: doc.id, ...doc.data() }));
+                // Sort sequentially in memory
+                qs.sort((a, b) => a.seq - b.seq);
+                allQuestions = qs;
+                if(callback) callback();
+            }, (err) => console.error("Questions Listen Error", err));
+        }
+
+        function listenToLogs() {
+            if(unsubLogs) unsubLogs();
+            const logsRef = getPublicPath('logs');
+            unsubLogs = onSnapshot(logsRef, (snap) => {
+                const lgs = [];
+                snap.forEach(doc => lgs.push(doc.data()));
+                // Sort by time descending
+                lgs.sort((a, b) => b.timestamp - a.timestamp);
+                allLogs = lgs;
+                renderAdminLogs();
+            }, (err) => console.error("Logs Listen Error", err));
+        }
+
+        // -- ADMIN LOGIC --
+        function setupAdminListeners() {
+            listenToGameState();
+            listenToQuestions(() => renderAdminQuestions());
+            listenToLogs();
+            
+            // Start timer interval for display updates
+            if(timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(updateGlobalTimerUI, 1000);
+        }
+
+        window.toggleGame = async (action) => {
+            const stateRef = getPublicDoc('core', 'gameState');
+            if (action === 'start') {
+                await setDoc(stateRef, { status: 'active', startTime: Date.now() }, {merge: true});
+            } else {
+                await setDoc(stateRef, { status: 'finished' }, {merge: true});
+            }
+        };
+
+        window.resetGame = async () => {
+            const stateRef = getPublicDoc('core', 'gameState');
+            await setDoc(stateRef, { status: 'waiting', startTime: null }, {merge: true});
+            
+            // Reset all teams to Q1
+            const teams = ['A', 'B', 'C', 'D'];
+            for (const t of teams) {
+                await setDoc(getPublicDoc('teams', t), { currentQuestionSeq: 1 }, {merge: true});
+            }
+            alertCustom("Game state and all team progressions reset.");
+        };
+
+        window.handleAddQuestion = async (e) => {
+            e.preventDefault();
+            const seq = parseInt(document.getElementById('q-seq').value);
+            const type = document.getElementById('q-type').value;
+            const content = document.getElementById('q-content').value;
+            const answer = document.getElementById('q-answer').value.toLowerCase().trim();
+
+            try {
+                await addDoc(getPublicPath('questions'), { seq, type, content, answer });
+                document.getElementById('form-add-q').reset();
+                document.getElementById('q-seq').value = seq + 1; // auto increment
+                // No alert needed, UI updates via listener
+            } catch(err) {
+                console.error("Add Q Error", err);
+                alertCustom("Failed to add question.");
+            }
+        };
+
+        window.deleteQuestion = async (id) => {
+            try {
+                await deleteDoc(getPublicDoc('questions', id));
+            } catch(err) {
+                console.error(err);
+            }
+        };
+
+        function renderAdminStatus() {
+            const badge = document.getElementById('admin-status-badge');
+            const btnStart = document.getElementById('btn-start');
+            const btnStop = document.getElementById('btn-stop');
+
+            badge.textContent = gameState.status;
+            
+            if (gameState.status === 'active') {
+                badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-green-900/50 text-green-400 border border-green-500/50";
+                btnStart.classList.add('hidden');
+                btnStop.classList.remove('hidden');
+            } else if (gameState.status === 'finished') {
+                badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-900/50 text-blue-400 border border-blue-500/50";
+                btnStart.classList.add('hidden');
+                btnStop.classList.remove('hidden'); // allow to stop multiple times or leave as is
+            } else {
+                // waiting
+                badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-700 text-slate-300";
+                btnStart.classList.remove('hidden');
+                btnStop.classList.add('hidden');
+            }
+        }
+
+        function renderAdminQuestions() {
+            const list = document.getElementById('admin-q-list');
+            if (allQuestions.length === 0) {
+                list.innerHTML = '<p class="text-slate-500 text-sm">No questions added yet.</p>';
+                return;
+            }
+
+            list.innerHTML = allQuestions.map(q => `
+                <div class="bg-slate-800 p-3 rounded-lg flex justify-between items-start border border-slate-700 group hover:border-slate-600 transition-colors">
+                    <div>
+                        <span class="inline-block bg-blue-900/50 text-blue-400 text-xs font-bold px-2 py-0.5 rounded mb-1">Q${q.seq} • ${q.type.toUpperCase()}</span>
+                        <p class="text-sm text-slate-200 truncate max-w-[200px] sm:max-w-xs" title="${q.content}">${q.content}</p>
+                        <p class="text-xs text-green-400 mt-1 font-mono">Ans: ${q.answer}</p>
+                    </div>
+                    <button onclick="deleteQuestion('${q.id}')" class="text-slate-500 hover:text-red-400 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function renderAdminLogs() {
+            const list = document.getElementById('admin-logs');
+            if (allLogs.length === 0) {
+                list.innerHTML = '<p class="text-slate-500 text-sm text-center mt-4">No activity yet</p>';
+                return;
+            }
+
+            list.innerHTML = allLogs.map(log => {
+                const timeStr = new Date(log.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+                return `
+                <div class="bg-slate-800/80 p-3 rounded-lg border-l-2 border-blue-500 text-sm animate-[fadeIn_0.3s_ease-out]">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-white">Team ${log.team}</span>
+                        <span class="text-xs text-slate-400">${timeStr}</span>
+                    </div>
+                    <p class="text-slate-300">Solved <span class="text-blue-400 font-semibold">Question ${log.qSeq}</span></p>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // -- PARTICIPANT LOGIC --
+        async function setupParticipantState(teamId) {
+            const teamRef = getPublicDoc('teams', teamId);
+            const snap = await getDoc(teamRef);
+            if (!snap.exists()) {
+                await setDoc(teamRef, { currentQuestionSeq: 1 });
+            }
+        }
+
+        function setupParticipantListeners(teamId) {
+            listenToGameState();
+            listenToQuestions(() => renderParticipantView());
+            
+            // Listen to specific team progression
+            if(unsubTeam) unsubTeam();
+            unsubTeam = onSnapshot(getPublicDoc('teams', teamId), (docSnap) => {
+                if(docSnap.exists()){
+                    teamState = docSnap.data();
+                    renderParticipantView();
+                }
+            }, (err) => console.error("Team Listen Error", err));
+
+            // Start UI timer
+            if(timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(updateGlobalTimerUI, 1000);
+        }
+
+        window.handleAnswerSubmit = async (e) => {
+            e.preventDefault();
+            if (gameState.status !== 'active') return;
+
+            const input = document.getElementById('part-answer-input');
+            const userAnswer = input.value.toLowerCase().trim();
+            const currentQ = allQuestions.find(q => q.seq === teamState.currentQuestionSeq);
+
+            if (!currentQ) {
+                alertCustom("No question loaded.");
+                return;
+            }
+
+            if (userAnswer === currentQ.answer) {
+                input.value = '';
+                // Correct! Update state
+                const nextSeq = teamState.currentQuestionSeq + 1;
+                
+                // Write Log
+                await addDoc(getPublicPath('logs'), {
+                    team: currentUserRole,
+                    qSeq: currentQ.seq,
+                    timestamp: Date.now()
+                });
+
+                // Update Team
+                await setDoc(getPublicDoc('teams', currentUserRole), {
+                    currentQuestionSeq: nextSeq
+                }, {merge: true});
+                
+                // Alert handled implicitly by UI update or we can flash a success
+                document.getElementById('q-status-msg').textContent = "Correct! Loading next...";
+                setTimeout(()=> { document.getElementById('q-status-msg').textContent = ""; }, 2000);
+
+            } else {
+                alertCustom("Incorrect answer. Try again!");
+                input.select();
+            }
+        };
+
+        function renderParticipantView() {
+            if(currentUserRole === 'admin' || !currentUserRole) return;
+
+            const viewWaiting = document.getElementById('part-state-waiting');
+            const viewFinished = document.getElementById('part-state-finished');
+            const viewActive = document.getElementById('part-state-active');
+
+            viewWaiting.classList.add('hidden');
+            viewFinished.classList.add('hidden');
+            viewActive.classList.add('hidden');
+
+            if (gameState.status === 'waiting') {
+                viewWaiting.classList.remove('hidden');
+            } else if (gameState.status === 'finished') {
+                viewFinished.classList.remove('hidden');
+            } else if (gameState.status === 'active') {
+                
+                // Check if time is organically up locally
+                const elapsed = Date.now() - gameState.startTime;
+                if (elapsed >= TIME_LIMIT_MS) {
+                    viewFinished.classList.remove('hidden');
+                    return;
+                }
+
+                viewActive.classList.remove('hidden');
+                viewActive.classList.add('flex');
+                renderActiveQuestion();
+            }
+        }
+
+        function renderActiveQuestion() {
+            const currentQ = allQuestions.find(q => q.seq === teamState.currentQuestionSeq);
+            
+            document.getElementById('q-counter-display').textContent = `Question ${teamState.currentQuestionSeq}`;
+            
+            const txtContainer = document.getElementById('part-text-content');
+            const mediaContainer = document.getElementById('part-media-container');
+
+            if (!currentQ) {
+                // Done with all questions!
+                txtContainer.innerHTML = '<span class="text-green-400 font-bold text-2xl flex items-center justify-center gap-3">🎉 You have solved all questions!</span>';
+                mediaContainer.classList.add('hidden');
+                document.getElementById('form-answer').classList.add('hidden');
+                return;
+            }
+
+            document.getElementById('form-answer').classList.remove('hidden');
+            mediaContainer.innerHTML = '';
+            mediaContainer.classList.add('hidden');
+
+            if (currentQ.type === 'text') {
+                txtContainer.textContent = currentQ.content;
+            } else if (currentQ.type === 'image') {
+                txtContainer.textContent = "Analyze the image below:";
+                mediaContainer.classList.remove('hidden');
+                mediaContainer.innerHTML = `<img src="${currentQ.content}" class="max-w-full h-auto max-h-[400px] object-contain rounded" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\\'text-red-400 p-4\\'>Failed to load image URL</span>'">`;
+            } else if (currentQ.type === 'video') {
+                txtContainer.textContent = "Watch the video below:";
+                mediaContainer.classList.remove('hidden');
+                mediaContainer.innerHTML = `<video src="${currentQ.content}" controls class="max-w-full w-full max-h-[400px] rounded bg-black" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\\'text-red-400 p-4\\'>Failed to load video URL</span>'"></video>`;
+            }
+        }
+
+        function updateGlobalTimerUI() {
+            let displayStr = "--:--";
+            
+            if (gameState.status === 'active' && gameState.startTime) {
+                const elapsed = Date.now() - gameState.startTime;
+                let left = TIME_LIMIT_MS - elapsed;
+                
+                if (left <= 0) {
+                    left = 0;
+                    // Switch state to finished if participant
+                    if(currentUserRole !== 'admin' && currentUserRole !== null) {
+                         renderParticipantView(); 
+                    }
+                }
+                
+                const mins = Math.floor(left / 60000);
+                const secs = Math.floor((left % 60000) / 1000);
+                displayStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            // Update UI
+            const adminTimer = document.getElementById('admin-timer');
+            if (adminTimer) adminTimer.textContent = displayStr;
+            
+            const partTimer = document.getElementById('participant-timer');
+            if (partTimer) partTimer.textContent = displayStr;
+            
+            // Add red color warning if < 5 mins
+            if(gameState.status === 'active' && gameState.startTime) {
+                const elapsed = Date.now() - gameState.startTime;
+                if((TIME_LIMIT_MS - elapsed) < (5 * 60 * 1000) && (TIME_LIMIT_MS - elapsed) > 0) {
+                    if(adminTimer) adminTimer.classList.replace('text-blue-400', 'text-red-400');
+                    if(partTimer) partTimer.classList.replace('text-white', 'text-red-400');
+                } else {
+                    if(adminTimer) adminTimer.classList.replace('text-red-400', 'text-blue-400');
+                    if(partTimer) partTimer.classList.replace('text-red-400', 'text-white');
+                }
+            }
+        }
+
+        // Add tailwind keyframe config for generic animations used inline
+        tailwind.config = {
+            theme: {
+                extend: {
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(5px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
