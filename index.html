@@ -336,17 +336,12 @@
         window.onload = () => {
             hideLoading();
             showScreen('screen-login');
-            
-            // Show a reminder if the default keys are still in place
-            if (SUPABASE_URL === 'https://YOUR_PROJECT_ID.supabase.co') {
-                setTimeout(() => alertCustom("Setup Required: Please paste your real Supabase URL and Key in the code to connect to the database."), 500);
-            }
         };
 
         // Login Logic
         window.login = async (role) => {
-            if (SUPABASE_URL === 'https://YOUR_PROJECT_ID.supabase.co' || !supabase) {
-                alertCustom("Database missing! Please add your Supabase credentials in the code.");
+            if (!supabase) {
+                alertCustom("Database connection failed. Check console for errors.");
                 return;
             }
 
