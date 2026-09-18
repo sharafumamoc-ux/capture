@@ -265,31 +265,32 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/+esm';
 
-        // Global Env Variables Handling
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'quiz-hunt-default';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            // Mock config for syntax completeness, real one provided by environment
-            apiKey: "mock-key", projectId: "mock-project"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        /* ----------------------------------------------------
+           1. SUPABASE CONFIGURATION
+           PASTE YOUR PROJECT URL AND ANON KEY HERE
+        ----------------------------------------------------- */
+        // Note: The URL must start with https://
+        const SUPABASE_URL = 'https://qhvyulgfdjjhzqnweuwg.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFodnl1bGdmZGpqaHpxbndldXdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3NDUzODUsImV4cCI6MjEwNTMyMTM4NX0.7SqlrR3PLOyxLjdF0BIuRlPXRi4pbIQusF4YLB_bM3U';
+        
+        let supabase;
+        try {
+            supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (e) {
+            console.error("Supabase URL is invalid", e);
+        }
 
         // State Variables
         let currentUserRole = null; // 'admin', 'A', 'B', 'C', 'D'
-        let currentUserId = null;
         
         let allQuestions = [];
         let allLogs = [];
         let gameState = { status: 'waiting', startTime: null };
         let teamState = { currentQuestionSeq: 1 };
         
+        // Supabase Channel Subscriptions
         let unsubGameState = null;
         let unsubQuestions = null;
         let unsubLogs = null;
@@ -298,10 +299,6 @@
         let timerInterval = null;
         const TIME_LIMIT_MS = 60 * 60 * 1000; // 60 minutes
 
-        // Helper to get strictly scoped path
-        const getPublicPath = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
-        const getPublicDoc = (col, docId) => doc(db, 'artifacts', appId, 'public', 'data', col, docId);
-
         // Modal Functions
         window.showModal = (title, message) => {
             document.getElementById('modal-title').textContent = title;
@@ -309,7 +306,6 @@
             const modal = document.getElementById('custom-modal');
             const content = document.getElementById('custom-modal-content');
             modal.classList.remove('hidden');
-            // Animate in
             setTimeout(() => {
                 content.classList.remove('scale-95', 'opacity-0');
                 content.classList.add('scale-100', 'opacity-100');
@@ -334,42 +330,33 @@
             if(screenId) document.getElementById(screenId).classList.remove('hidden');
         };
 
-        const hideLoading = () => {
-            document.getElementById('loading-overlay').classList.add('hidden');
-        };
-        const showLoading = () => {
-            document.getElementById('loading-overlay').classList.remove('hidden');
-        };
+        const hideLoading = () => document.getElementById('loading-overlay').classList.add('hidden');
 
-        async function initAuth() {
-            try {
-                if (typeof __initial_auth_token !== 'undefined') {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                currentUserId = auth.currentUser.uid;
-                hideLoading();
-                showScreen('screen-login');
-            } catch (err) {
-                console.error("Auth Error:", err);
-                alertCustom("Failed to connect to authentication server.");
-                hideLoading();
+        // App Initialization
+        window.onload = () => {
+            hideLoading();
+            showScreen('screen-login');
+            
+            // Show a reminder if the default keys are still in place
+            if (SUPABASE_URL === 'https://YOUR_PROJECT_ID.supabase.co') {
+                setTimeout(() => alertCustom("Setup Required: Please paste your real Supabase URL and Key in the code to connect to the database."), 500);
             }
-        }
-
-        // Wait for page load to start auth
-        window.onload = initAuth;
+        };
 
         // Login Logic
         window.login = async (role) => {
+            if (SUPABASE_URL === 'https://YOUR_PROJECT_ID.supabase.co' || !supabase) {
+                alertCustom("Database missing! Please add your Supabase credentials in the code.");
+                return;
+            }
+
             if (role === 'admin') {
                 const passwordInput = document.getElementById('admin-password');
                 if (passwordInput.value !== 'admin@2026') {
                     alertCustom("Incorrect admin password.");
                     return;
                 }
-                passwordInput.value = ''; // Clear password on success
+                passwordInput.value = '';
                 currentUserRole = role;
                 showScreen('screen-admin');
                 setupAdminListeners();
@@ -384,59 +371,78 @@
         };
 
         window.logout = () => {
-            // Cleanup listeners
-            if(unsubGameState) unsubGameState();
-            if(unsubQuestions) unsubQuestions();
-            if(unsubLogs) unsubLogs();
-            if(unsubTeam) unsubTeam();
+            // Cleanup Supabase Channels
+            if(unsubGameState) supabase.removeChannel(unsubGameState);
+            if(unsubQuestions) supabase.removeChannel(unsubQuestions);
+            if(unsubLogs) supabase.removeChannel(unsubLogs);
+            if(unsubTeam) supabase.removeChannel(unsubTeam);
             if(timerInterval) clearInterval(timerInterval);
             
             currentUserRole = null;
             showScreen('screen-login');
         };
 
-        // -- Listeners -- 
-        function listenToGameState() {
-            if(unsubGameState) unsubGameState();
-            const stateRef = getPublicDoc('core', 'gameState');
-            unsubGameState = onSnapshot(stateRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    gameState = docSnap.data();
-                } else {
+        // -- Supabase Listeners -- 
+        async function listenToGameState() {
+            if(unsubGameState) supabase.removeChannel(unsubGameState);
+            
+            const fetchState = async () => {
+                const { data } = await supabase.from('game_state').select('*').eq('id', 'core').maybeSingle();
+                if (data) gameState = data;
+                else {
                     gameState = { status: 'waiting', startTime: null };
-                    // Initialize if empty
-                    if(currentUserRole === 'admin') setDoc(stateRef, gameState);
+                    if(currentUserRole === 'admin') await supabase.from('game_state').upsert({ id: 'core', ...gameState });
                 }
                 updateGlobalTimerUI();
                 if(currentUserRole === 'admin') renderAdminStatus();
                 else renderParticipantView();
-            }, (err) => console.error("GameState Listen Error", err));
+            };
+
+            await fetchState();
+
+            unsubGameState = supabase.channel('public:game_state')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'game_state', filter: 'id=eq.core' }, payload => {
+                    gameState = { ...gameState, ...payload.new };
+                    updateGlobalTimerUI();
+                    if(currentUserRole === 'admin') renderAdminStatus();
+                    else renderParticipantView();
+                }).subscribe();
         }
 
-        function listenToQuestions(callback) {
-            if(unsubQuestions) unsubQuestions();
-            const qRef = getPublicPath('questions');
-            unsubQuestions = onSnapshot(qRef, (snap) => {
-                const qs = [];
-                snap.forEach(doc => qs.push({ id: doc.id, ...doc.data() }));
-                // Sort sequentially in memory
-                qs.sort((a, b) => a.seq - b.seq);
-                allQuestions = qs;
+        async function listenToQuestions(callback) {
+            if(unsubQuestions) supabase.removeChannel(unsubQuestions);
+
+            const fetchQuestions = async () => {
+                const { data } = await supabase.from('questions').select('*').order('seq', { ascending: true });
+                if (data) allQuestions = data;
                 if(callback) callback();
-            }, (err) => console.error("Questions Listen Error", err));
+            };
+
+            await fetchQuestions();
+
+            unsubQuestions = supabase.channel('public:questions')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'questions' }, async () => {
+                    await fetchQuestions(); 
+                }).subscribe();
         }
 
-        function listenToLogs() {
-            if(unsubLogs) unsubLogs();
-            const logsRef = getPublicPath('logs');
-            unsubLogs = onSnapshot(logsRef, (snap) => {
-                const lgs = [];
-                snap.forEach(doc => lgs.push(doc.data()));
-                // Sort by time descending
-                lgs.sort((a, b) => b.timestamp - a.timestamp);
-                allLogs = lgs;
-                renderAdminLogs();
-            }, (err) => console.error("Logs Listen Error", err));
+        async function listenToLogs() {
+            if(unsubLogs) supabase.removeChannel(unsubLogs);
+
+            const fetchLogs = async () => {
+                const { data } = await supabase.from('logs').select('*').order('timestamp', { ascending: false });
+                if (data) {
+                    allLogs = data;
+                    renderAdminLogs();
+                }
+            };
+
+            await fetchLogs();
+
+            unsubLogs = supabase.channel('public:logs')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'logs' }, async () => {
+                    await fetchLogs();
+                }).subscribe();
         }
 
         // -- ADMIN LOGIC --
@@ -445,29 +451,24 @@
             listenToQuestions(() => renderAdminQuestions());
             listenToLogs();
             
-            // Start timer interval for display updates
             if(timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(updateGlobalTimerUI, 1000);
         }
 
         window.toggleGame = async (action) => {
-            const stateRef = getPublicDoc('core', 'gameState');
             if (action === 'start') {
-                await setDoc(stateRef, { status: 'active', startTime: Date.now() }, {merge: true});
+                await supabase.from('game_state').upsert({ id: 'core', status: 'active', startTime: Date.now() });
             } else {
-                await setDoc(stateRef, { status: 'finished' }, {merge: true});
+                await supabase.from('game_state').upsert({ id: 'core', status: 'finished' });
             }
         };
 
         window.resetGame = async () => {
-            const stateRef = getPublicDoc('core', 'gameState');
-            await setDoc(stateRef, { status: 'waiting', startTime: null }, {merge: true});
+            await supabase.from('game_state').upsert({ id: 'core', status: 'waiting', startTime: null });
             
-            // Reset all teams to Q1
-            const teams = ['A', 'B', 'C', 'D'];
-            for (const t of teams) {
-                await setDoc(getPublicDoc('teams', t), { currentQuestionSeq: 1 }, {merge: true});
-            }
+            const teamResets = ['A', 'B', 'C', 'D'].map(t => ({ id: t, currentQuestionSeq: 1 }));
+            await supabase.from('teams').upsert(teamResets);
+            
             alertCustom("Game state and all team progressions reset.");
         };
 
@@ -479,10 +480,9 @@
             const answer = document.getElementById('q-answer').value.toLowerCase().trim();
 
             try {
-                await addDoc(getPublicPath('questions'), { seq, type, content, answer });
+                await supabase.from('questions').insert([{ seq, type, content, answer }]);
                 document.getElementById('form-add-q').reset();
-                document.getElementById('q-seq').value = seq + 1; // auto increment
-                // No alert needed, UI updates via listener
+                document.getElementById('q-seq').value = seq + 1;
             } catch(err) {
                 console.error("Add Q Error", err);
                 alertCustom("Failed to add question.");
@@ -490,11 +490,7 @@
         };
 
         window.deleteQuestion = async (id) => {
-            try {
-                await deleteDoc(getPublicDoc('questions', id));
-            } catch(err) {
-                console.error(err);
-            }
+            await supabase.from('questions').delete().eq('id', id);
         };
 
         function renderAdminStatus() {
@@ -511,9 +507,8 @@
             } else if (gameState.status === 'finished') {
                 badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-900/50 text-blue-400 border border-blue-500/50";
                 btnStart.classList.add('hidden');
-                btnStop.classList.remove('hidden'); // allow to stop multiple times or leave as is
+                btnStop.classList.remove('hidden'); 
             } else {
-                // waiting
                 badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-700 text-slate-300";
                 btnStart.classList.remove('hidden');
                 btnStop.classList.add('hidden');
@@ -564,27 +559,25 @@
 
         // -- PARTICIPANT LOGIC --
         async function setupParticipantState(teamId) {
-            const teamRef = getPublicDoc('teams', teamId);
-            const snap = await getDoc(teamRef);
-            if (!snap.exists()) {
-                await setDoc(teamRef, { currentQuestionSeq: 1 });
+            const { data } = await supabase.from('teams').select('*').eq('id', teamId).maybeSingle();
+            if (!data) {
+                await supabase.from('teams').upsert({ id: teamId, currentQuestionSeq: 1 });
+            } else {
+                teamState = data;
             }
         }
 
-        function setupParticipantListeners(teamId) {
+        async function setupParticipantListeners(teamId) {
             listenToGameState();
             listenToQuestions(() => renderParticipantView());
             
-            // Listen to specific team progression
-            if(unsubTeam) unsubTeam();
-            unsubTeam = onSnapshot(getPublicDoc('teams', teamId), (docSnap) => {
-                if(docSnap.exists()){
-                    teamState = docSnap.data();
+            if(unsubTeam) supabase.removeChannel(unsubTeam);
+            unsubTeam = supabase.channel(`public:teams:${teamId}`)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'teams', filter: `id=eq.${teamId}` }, payload => {
+                    teamState = payload.new;
                     renderParticipantView();
-                }
-            }, (err) => console.error("Team Listen Error", err));
+                }).subscribe();
 
-            // Start UI timer
             if(timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(updateGlobalTimerUI, 1000);
         }
@@ -604,22 +597,11 @@
 
             if (userAnswer === currentQ.answer) {
                 input.value = '';
-                // Correct! Update state
                 const nextSeq = teamState.currentQuestionSeq + 1;
                 
-                // Write Log
-                await addDoc(getPublicPath('logs'), {
-                    team: currentUserRole,
-                    qSeq: currentQ.seq,
-                    timestamp: Date.now()
-                });
-
-                // Update Team
-                await setDoc(getPublicDoc('teams', currentUserRole), {
-                    currentQuestionSeq: nextSeq
-                }, {merge: true});
+                await supabase.from('logs').insert([{ team: currentUserRole, qSeq: currentQ.seq, timestamp: Date.now() }]);
+                await supabase.from('teams').upsert({ id: currentUserRole, currentQuestionSeq: nextSeq });
                 
-                // Alert handled implicitly by UI update or we can flash a success
                 document.getElementById('q-status-msg').textContent = "Correct! Loading next...";
                 setTimeout(()=> { document.getElementById('q-status-msg').textContent = ""; }, 2000);
 
@@ -646,7 +628,6 @@
                 viewFinished.classList.remove('hidden');
             } else if (gameState.status === 'active') {
                 
-                // Check if time is organically up locally
                 const elapsed = Date.now() - gameState.startTime;
                 if (elapsed >= TIME_LIMIT_MS) {
                     viewFinished.classList.remove('hidden');
@@ -668,7 +649,6 @@
             const mediaContainer = document.getElementById('part-media-container');
 
             if (!currentQ) {
-                // Done with all questions!
                 txtContainer.innerHTML = '<span class="text-green-400 font-bold text-2xl flex items-center justify-center gap-3">🎉 You have solved all questions!</span>';
                 mediaContainer.classList.add('hidden');
                 document.getElementById('form-answer').classList.add('hidden');
@@ -701,7 +681,6 @@
                 
                 if (left <= 0) {
                     left = 0;
-                    // Switch state to finished if participant
                     if(currentUserRole !== 'admin' && currentUserRole !== null) {
                          renderParticipantView(); 
                     }
@@ -712,14 +691,12 @@
                 displayStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
             }
 
-            // Update UI
             const adminTimer = document.getElementById('admin-timer');
             if (adminTimer) adminTimer.textContent = displayStr;
             
             const partTimer = document.getElementById('participant-timer');
             if (partTimer) partTimer.textContent = displayStr;
             
-            // Add red color warning if < 5 mins
             if(gameState.status === 'active' && gameState.startTime) {
                 const elapsed = Date.now() - gameState.startTime;
                 if((TIME_LIMIT_MS - elapsed) < (5 * 60 * 1000) && (TIME_LIMIT_MS - elapsed) > 0) {
@@ -732,7 +709,6 @@
             }
         }
 
-        // Add tailwind keyframe config for generic animations used inline
         tailwind.config = {
             theme: {
                 extend: {
