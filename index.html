@@ -1,36 +1,48 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz Hunt</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0f172a; /* Slate 900 */
-            color: #f8fafc; /* Slate 50 */
+            background: #0f172a;
+            color: #f8fafc;
         }
+
         .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(30, 41, 59, 0.78);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.10);
         }
+
         .custom-scrollbar::-webkit-scrollbar {
             width: 8px;
         }
+
         .custom-scrollbar::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.5); 
+            background: rgba(15, 23, 42, 0.5);
         }
+
         .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #475569; 
+            background: #475569;
             border-radius: 4px;
         }
+
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #64748b; 
+            background: #64748b;
         }
-        /* Loader */
+
         .loader {
             border: 3px solid rgba(255,255,255,0.1);
             border-bottom-color: #3b82f6;
@@ -39,724 +51,3301 @@
             box-sizing: border-box;
             animation: rotation 1s linear infinite;
         }
+
         @keyframes rotation {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .shake {
+            animation: shake 0.35s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-8px);
+            }
+
+            75% {
+                transform: translateX(8px);
+            }
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col relative overflow-hidden">
-    
-    <!-- Background Accents -->
-    <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-20 pointer-events-none"></div>
-    <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-20 pointer-events-none"></div>
 
-    <!-- Custom Modal for Alerts (Replaces alert()) -->
-    <div id="custom-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-        <div class="glass-panel p-6 rounded-2xl max-w-sm w-full shadow-2xl transform transition-all scale-95 opacity-0" id="custom-modal-content">
-            <h3 id="modal-title" class="text-xl font-bold mb-2 text-white">Notice</h3>
-            <p id="modal-message" class="text-slate-300 mb-6">Message goes here.</p>
-            <button onclick="closeModal()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+<body class="min-h-screen flex flex-col relative overflow-hidden">
+
+    <!-- Background -->
+    <div class="absolute top-[-10%] left-[-10%]
+                w-96 h-96 bg-blue-600 rounded-full
+                mix-blend-multiply filter blur-[128px]
+                opacity-20 pointer-events-none"></div>
+
+    <div class="absolute bottom-[-10%] right-[-10%]
+                w-96 h-96 bg-purple-600 rounded-full
+                mix-blend-multiply filter blur-[128px]
+                opacity-20 pointer-events-none"></div>
+
+
+    <!-- Modal -->
+    <div
+        id="custom-modal"
+        class="fixed inset-0 z-50 hidden items-center justify-center
+               bg-black/60 backdrop-blur-sm p-4"
+    >
+        <div
+            id="custom-modal-content"
+            class="glass-panel p-6 rounded-2xl max-w-sm
+                   w-full shadow-2xl transform transition-all
+                   scale-95 opacity-0"
+        >
+            <h3
+                id="modal-title"
+                class="text-xl font-bold mb-2 text-white"
+            >
+                Notice
+            </h3>
+
+            <p
+                id="modal-message"
+                class="text-slate-300 mb-6"
+            >
+                Message
+            </p>
+
+            <button
+                onclick="closeModal()"
+                class="w-full bg-blue-600 hover:bg-blue-500
+                       text-white font-medium py-2 px-4
+                       rounded-lg"
+            >
                 Got it
             </button>
         </div>
     </div>
 
-    <!-- Loading Overlay -->
-    <div id="loading-overlay" class="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-slate-900">
+
+    <!-- Loading -->
+    <div
+        id="loading-overlay"
+        class="fixed inset-0 z-[60]
+               flex flex-col items-center justify-center
+               bg-slate-900"
+    >
         <div class="loader w-12 h-12 mb-4"></div>
-        <p class="text-slate-400 font-medium tracking-wide animate-pulse">Connecting to Server...</p>
+
+        <p class="text-slate-400 font-medium tracking-wide">
+            Connecting to Server...
+        </p>
     </div>
 
-    <!-- Screen 1: Login -->
-    <div id="screen-login" class="flex-1 flex items-center justify-center p-4 z-10 hidden">
-        <div class="glass-panel p-8 rounded-2xl w-full max-w-md shadow-2xl text-center">
+
+    <!-- LOGIN -->
+    <div
+        id="screen-login"
+        class="flex-1 flex items-center justify-center
+               p-4 z-10 hidden"
+    >
+        <div
+            class="glass-panel p-8 rounded-2xl
+                   w-full max-w-md shadow-2xl text-center"
+        >
+
             <div class="mb-8">
-                <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-2">Quiz Hunt</h1>
-                <p class="text-slate-400">Select your role to continue</p>
+                <h1
+                    class="text-3xl font-extrabold
+                           text-transparent bg-clip-text
+                           bg-gradient-to-r from-blue-400 to-purple-400
+                           mb-2"
+                >
+                    Quiz Hunt
+                </h1>
+
+                <p class="text-slate-400">
+                    Select your role to continue
+                </p>
             </div>
-            
+
+
+            <!-- Admin -->
             <div class="space-y-4">
+
                 <div class="flex flex-col gap-2">
-                    <input type="password" id="admin-password" placeholder="Admin Password" class="w-full bg-slate-800 border border-slate-600 text-white px-4 py-2 rounded-xl focus:outline-none focus:border-blue-500 shadow-inner">
-                    <button onclick="login('admin')" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-semibold py-3 px-4 rounded-xl transition-all shadow-lg hover:shadow-blue-900/20 group flex justify-between items-center">
+
+                    <input
+                        type="password"
+                        id="admin-password"
+                        placeholder="Admin Password"
+                        class="w-full bg-slate-800
+                               border border-slate-600
+                               text-white px-4 py-2
+                               rounded-xl
+                               focus:outline-none
+                               focus:border-blue-500"
+                    >
+
+                    <button
+                        onclick="login('admin')"
+                        class="w-full bg-slate-800
+                               hover:bg-slate-700
+                               border border-slate-600
+                               text-white font-semibold
+                               py-3 px-4 rounded-xl"
+                    >
                         <span>Admin Login</span>
-                        <span class="text-slate-500 group-hover:text-blue-400 transition-colors">→</span>
                     </button>
-                </div>
-                
-                <div class="relative py-2">
-                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-700"></div></div>
-                    <div class="relative flex justify-center"><span class="bg-[#0f172a] px-4 text-sm text-slate-500">Participants</span></div>
+
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="login('A')" class="bg-blue-900/40 hover:bg-blue-800/60 border border-blue-700/50 text-blue-100 font-medium py-3 rounded-xl transition-all">Team A</button>
-                    <button onclick="login('B')" class="bg-green-900/40 hover:bg-green-800/60 border border-green-700/50 text-green-100 font-medium py-3 rounded-xl transition-all">Team B</button>
-                    <button onclick="login('C')" class="bg-purple-900/40 hover:bg-purple-800/60 border border-purple-700/50 text-purple-100 font-medium py-3 rounded-xl transition-all">Team C</button>
-                    <button onclick="login('D')" class="bg-orange-900/40 hover:bg-orange-800/60 border border-orange-700/50 text-orange-100 font-medium py-3 rounded-xl transition-all">Team D</button>
+
+                <div class="relative py-2">
+
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-slate-700"></div>
+                    </div>
+
+                    <div class="relative flex justify-center">
+                        <span
+                            class="bg-[#0f172a]
+                                   px-4 text-sm text-slate-500"
+                        >
+                            Participants
+                        </span>
+                    </div>
+
                 </div>
+
+
+                <!-- Teams -->
+                <div class="grid grid-cols-2 gap-3">
+
+                    <button
+                        onclick="login('A')"
+                        class="bg-blue-900/40
+                               hover:bg-blue-800/60
+                               border border-blue-700/50
+                               text-blue-100
+                               font-medium py-3 rounded-xl"
+                    >
+                        Team A
+                    </button>
+
+                    <button
+                        onclick="login('B')"
+                        class="bg-green-900/40
+                               hover:bg-green-800/60
+                               border border-green-700/50
+                               text-green-100
+                               font-medium py-3 rounded-xl"
+                    >
+                        Team B
+                    </button>
+
+                    <button
+                        onclick="login('C')"
+                        class="bg-purple-900/40
+                               hover:bg-purple-800/60
+                               border border-purple-700/50
+                               text-purple-100
+                               font-medium py-3 rounded-xl"
+                    >
+                        Team C
+                    </button>
+
+                    <button
+                        onclick="login('D')"
+                        class="bg-orange-900/40
+                               hover:bg-orange-800/60
+                               border border-orange-700/50
+                               text-orange-100
+                               font-medium py-3 rounded-xl"
+                    >
+                        Team D
+                    </button>
+
+                </div>
+
             </div>
         </div>
     </div>
 
-    <!-- Screen 2: Admin Dashboard -->
-    <div id="screen-admin" class="flex-1 flex flex-col h-screen hidden z-10">
-        <header class="glass-panel px-6 py-4 flex justify-between items-center border-b-0 border-slate-700">
-            <h1 class="text-xl font-bold text-white">Admin Dashboard</h1>
+
+    <!-- ADMIN -->
+    <div
+        id="screen-admin"
+        class="flex-1 flex flex-col h-screen hidden z-10"
+    >
+
+        <header
+            class="glass-panel px-6 py-4
+                   flex justify-between items-center"
+        >
+
+            <h1 class="text-xl font-bold">
+                Admin Dashboard
+            </h1>
+
             <div class="flex items-center gap-4">
-                <div id="admin-status-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-700 text-slate-300">Waiting</div>
-                <button onclick="logout()" class="text-sm text-slate-400 hover:text-white transition-colors">Logout</button>
+
+                <div
+                    id="admin-status-badge"
+                    class="px-3 py-1 rounded-full
+                           text-xs font-bold uppercase
+                           bg-slate-700 text-slate-300"
+                >
+                    Waiting
+                </div>
+
+                <button
+                    onclick="logout()"
+                    class="text-sm text-slate-400
+                           hover:text-white"
+                >
+                    Logout
+                </button>
+
             </div>
         </header>
 
-        <div class="flex-1 overflow-hidden flex flex-col md:flex-row max-w-7xl w-full mx-auto p-4 gap-6">
-            
-            <!-- Left Col: Controls & Questions -->
-            <div class="flex-1 flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2">
-                
-                <!-- Game Controls -->
+
+        <div
+            class="flex-1 overflow-hidden
+                   flex flex-col md:flex-row
+                   max-w-7xl w-full mx-auto
+                   p-4 gap-6"
+        >
+
+            <!-- LEFT -->
+            <div
+                class="flex-1 flex flex-col gap-6
+                       overflow-y-auto custom-scrollbar pr-2"
+            >
+
+                <!-- GAME CONTROL -->
                 <div class="glass-panel p-6 rounded-2xl">
-                    <h2 class="text-lg font-semibold mb-4 border-b border-slate-700 pb-2">Game Controls</h2>
-                    <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+
+                    <h2
+                        class="text-lg font-semibold mb-4
+                               border-b border-slate-700 pb-2"
+                    >
+                        Game Controls
+                    </h2>
+
+                    <div
+                        class="flex flex-col sm:flex-row
+                               gap-4 items-center
+                               justify-between"
+                    >
+
                         <div>
-                            <p class="text-sm text-slate-400 mb-1">Time Limit: 60 Minutes</p>
-                            <p id="admin-timer" class="text-2xl font-mono font-bold text-blue-400">00:00</p>
+
+                            <p class="text-sm text-slate-400 mb-1">
+                                Time Limit: 60 Minutes
+                            </p>
+
+                            <p
+                                id="admin-timer"
+                                class="text-2xl font-mono
+                                       font-bold text-blue-400"
+                            >
+                                60:00
+                            </p>
+
                         </div>
+
+
                         <div class="flex gap-3 w-full sm:w-auto">
-                            <button id="btn-start" onclick="toggleGame('start')" class="flex-1 sm:flex-none bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-medium transition-colors">Start Game</button>
-                            <button id="btn-stop" onclick="toggleGame('stop')" class="flex-1 sm:flex-none bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded-lg font-medium transition-colors hidden">Stop Game</button>
-                            <button onclick="resetGame()" class="flex-1 sm:flex-none bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">Reset</button>
-                            <button onclick="seedQuestions()" class="flex-1 sm:flex-none bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg font-medium transition-colors" title="Load the 5 image questions">Load GitHub Images</button>
+
+                            <button
+                                id="btn-start"
+                                onclick="toggleGame('start')"
+                                class="flex-1 sm:flex-none
+                                       bg-green-600
+                                       hover:bg-green-500
+                                       text-white px-6 py-2
+                                       rounded-lg font-medium"
+                            >
+                                Start Game
+                            </button>
+
+                            <button
+                                id="btn-stop"
+                                onclick="toggleGame('stop')"
+                                class="flex-1 sm:flex-none
+                                       bg-red-600
+                                       hover:bg-red-500
+                                       text-white px-6 py-2
+                                       rounded-lg
+                                       font-medium hidden"
+                            >
+                                Stop Game
+                            </button>
+
+                            <button
+                                onclick="resetGame()"
+                                class="flex-1 sm:flex-none
+                                       bg-slate-700
+                                       hover:bg-slate-600
+                                       text-white px-4 py-2
+                                       rounded-lg font-medium"
+                            >
+                                Reset
+                            </button>
+
                         </div>
                     </div>
                 </div>
 
-                <!-- Add Question Form -->
+
+                <!-- QUICK ADD DEFAULT QUESTIONS -->
                 <div class="glass-panel p-6 rounded-2xl">
-                    <h2 class="text-lg font-semibold mb-4 border-b border-slate-700 pb-2">Add New Question</h2>
-                    <form id="form-add-q" class="space-y-4" onsubmit="handleAddQuestion(event)">
+
+                    <h2
+                        class="text-lg font-semibold mb-2
+                               border-b border-slate-700 pb-2"
+                    >
+                        GitHub Question Bank
+                    </h2>
+
+                    <p class="text-sm text-slate-400 mb-4">
+                        Add your five prepared image questions:
+                        1.png, 2.png, 3.png, 4.png and 5.png.
+                    </p>
+
+                    <button
+                        onclick="loadDefaultQuestions()"
+                        class="w-full bg-purple-600
+                               hover:bg-purple-500
+                               text-white font-semibold
+                               py-3 rounded-lg"
+                    >
+                        Add 5 GitHub Questions
+                    </button>
+
+                    <p
+                        id="github-base-display"
+                        class="text-xs text-slate-500 mt-3 break-all"
+                    ></p>
+
+                </div>
+
+
+                <!-- MANUAL ADD -->
+                <div class="glass-panel p-6 rounded-2xl">
+
+                    <h2
+                        class="text-lg font-semibold mb-4
+                               border-b border-slate-700 pb-2"
+                    >
+                        Add New Question
+                    </h2>
+
+                    <form
+                        id="form-add-q"
+                        class="space-y-4"
+                        onsubmit="handleAddQuestion(event)"
+                    >
+
                         <div class="grid grid-cols-2 gap-4">
+
                             <div>
-                                <label class="block text-sm text-slate-400 mb-1">Question Number</label>
-                                <input type="number" id="q-seq" required min="1" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+
+                                <label
+                                    class="block text-sm
+                                           text-slate-400 mb-1"
+                                >
+                                    Question Number
+                                </label>
+
+                                <input
+                                    type="number"
+                                    id="q-seq"
+                                    required
+                                    min="1"
+                                    class="w-full bg-slate-800
+                                           border border-slate-700
+                                           rounded-lg px-3 py-2
+                                           text-white"
+                                >
+
                             </div>
+
+
                             <div>
-                                <label class="block text-sm text-slate-400 mb-1">Media Type</label>
-                                <select id="q-type" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500">
-                                    <option value="text">Text Only</option>
-                                    <option value="image">Image URL</option>
-                                    <option value="video">Video URL (mp4)</option>
+
+                                <label
+                                    class="block text-sm
+                                           text-slate-400 mb-1"
+                                >
+                                    Media Type
+                                </label>
+
+                                <select
+                                    id="q-type"
+                                    class="w-full bg-slate-800
+                                           border border-slate-700
+                                           rounded-lg px-3 py-2
+                                           text-white"
+                                >
+                                    <option value="text">
+                                        Text Only
+                                    </option>
+
+                                    <option value="image">
+                                        Image URL
+                                    </option>
+
+                                    <option value="video">
+                                        Video URL
+                                    </option>
                                 </select>
+
                             </div>
+
                         </div>
+
+
                         <div>
-                            <label class="block text-sm text-slate-400 mb-1">Question Content / URL</label>
-                            <textarea id="q-content" required rows="3" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 placeholder-slate-600" placeholder="Type question or paste image/video URL..."></textarea>
+
+                            <label
+                                class="block text-sm
+                                       text-slate-400 mb-1"
+                            >
+                                Question Content / URL
+                            </label>
+
+                            <textarea
+                                id="q-content"
+                                required
+                                rows="3"
+                                class="w-full bg-slate-800
+                                       border border-slate-700
+                                       rounded-lg px-3 py-2
+                                       text-white"
+                                placeholder="Question text or image URL"
+                            ></textarea>
+
                         </div>
+
+
                         <div>
-                            <label class="block text-sm text-slate-400 mb-1">Exact Answer</label>
-                            <input type="text" id="q-answer" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 placeholder-slate-600" placeholder="e.g. Paris">
+
+                            <label
+                                class="block text-sm
+                                       text-slate-400 mb-1"
+                            >
+                                Exact Answer
+                            </label>
+
+                            <input
+                                type="text"
+                                id="q-answer"
+                                required
+                                class="w-full bg-slate-800
+                                       border border-slate-700
+                                       rounded-lg px-3 py-2
+                                       text-white"
+                                placeholder="Enter correct answer"
+                            >
+
                         </div>
-                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 rounded-lg transition-colors">Add Question</button>
+
+
+                        <button
+                            type="submit"
+                            id="btn-add-question"
+                            class="w-full bg-blue-600
+                                   hover:bg-blue-500
+                                   text-white font-medium
+                                   py-3 rounded-lg"
+                        >
+                            Save Question
+                        </button>
+
                     </form>
                 </div>
 
-                <!-- Existing Questions List -->
+
+                <!-- QUESTION BANK -->
                 <div class="glass-panel p-6 rounded-2xl">
-                    <h2 class="text-lg font-semibold mb-4 border-b border-slate-700 pb-2">Question Bank</h2>
-                    <div id="admin-q-list" class="space-y-3">
-                        <!-- Filled by JS -->
-                        <p class="text-slate-500 text-sm">Loading questions...</p>
+
+                    <h2
+                        class="text-lg font-semibold mb-4
+                               border-b border-slate-700 pb-2"
+                    >
+                        Question Bank
+                    </h2>
+
+                    <div
+                        id="admin-q-list"
+                        class="space-y-3"
+                    >
+                        <p class="text-slate-500 text-sm">
+                            Loading questions...
+                        </p>
                     </div>
+
                 </div>
+
             </div>
 
-            <!-- Right Col: Live Feed -->
-            <div class="w-full md:w-80 glass-panel rounded-2xl flex flex-col overflow-hidden h-[60vh] md:h-auto">
-                <div class="p-4 border-b border-slate-700 bg-slate-800/50">
-                    <h2 class="text-lg font-semibold flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+
+            <!-- RIGHT -->
+            <div
+                class="w-full md:w-80
+                       glass-panel rounded-2xl
+                       flex flex-col overflow-hidden
+                       h-[60vh] md:h-auto"
+            >
+
+                <div
+                    class="p-4 border-b
+                           border-slate-700
+                           bg-slate-800/50"
+                >
+                    <h2 class="text-lg font-semibold">
                         Live Progress Feed
                     </h2>
                 </div>
-                <div id="admin-logs" class="flex-1 p-4 overflow-y-auto custom-scrollbar space-y-3">
-                    <!-- Filled by JS -->
-                    <p class="text-slate-500 text-sm text-center mt-4">No activity yet</p>
+
+                <div
+                    id="admin-logs"
+                    class="flex-1 p-4
+                           overflow-y-auto
+                           custom-scrollbar space-y-3"
+                >
+                    <p
+                        class="text-slate-500
+                               text-sm text-center mt-4"
+                    >
+                        No activity yet
+                    </p>
                 </div>
+
             </div>
+
         </div>
     </div>
 
-    <!-- Screen 3: Participant View -->
-    <div id="screen-participant" class="flex-1 flex flex-col h-screen hidden z-10">
-        <!-- Header -->
-        <header class="glass-panel px-4 sm:px-6 py-4 flex justify-between items-center sticky top-0 z-20">
+
+    <!-- PARTICIPANT -->
+    <div
+        id="screen-participant"
+        class="flex-1 flex flex-col
+               h-screen hidden z-10"
+    >
+
+        <header
+            class="glass-panel px-4 sm:px-6 py-4
+                   flex justify-between items-center
+                   sticky top-0 z-20"
+        >
+
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xl font-bold shadow-lg" id="team-avatar">A</div>
+
+                <div
+                    id="team-avatar"
+                    class="w-10 h-10 rounded-full
+                           bg-gradient-to-br
+                           from-blue-500 to-purple-600
+                           flex items-center
+                           justify-center
+                           text-xl font-bold"
+                >
+                    A
+                </div>
+
                 <div>
-                    <h1 class="font-bold text-white leading-tight">Team <span id="team-name-display">A</span></h1>
-                    <p class="text-xs text-slate-400">Participant</p>
+
+                    <h1 class="font-bold">
+                        Team
+                        <span id="team-name-display">
+                            A
+                        </span>
+                    </h1>
+
+                    <p class="text-xs text-slate-400">
+                        Participant
+                    </p>
+
                 </div>
+
             </div>
+
+
             <div class="flex items-center gap-4">
-                <div class="glass-panel px-4 py-2 rounded-lg border border-slate-600/50 flex flex-col items-end">
-                    <span class="text-[10px] uppercase tracking-wide text-slate-400 font-semibold">Time Remaining</span>
-                    <span id="participant-timer" class="text-xl sm:text-2xl font-mono font-bold text-white tabular-nums">--:--</span>
+
+                <div
+                    class="glass-panel px-4 py-2
+                           rounded-lg
+                           flex flex-col items-end"
+                >
+
+                    <span
+                        class="text-[10px]
+                               uppercase tracking-wide
+                               text-slate-400"
+                    >
+                        Time Remaining
+                    </span>
+
+                    <span
+                        id="participant-timer"
+                        class="text-xl sm:text-2xl
+                               font-mono font-bold"
+                    >
+                        60:00
+                    </span>
+
                 </div>
-                <button onclick="logout()" class="text-sm text-slate-400 hover:text-white transition-colors hidden sm:block">Exit</button>
+
+                <button
+                    onclick="logout()"
+                    class="text-sm text-slate-400
+                           hover:text-white hidden sm:block"
+                >
+                    Exit
+                </button>
+
             </div>
         </header>
 
-        <main class="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 overflow-y-auto custom-scrollbar">
-            
-            <!-- State: Waiting for Admin -->
-            <div id="part-state-waiting" class="glass-panel p-8 rounded-2xl max-w-md w-full text-center hidden">
-                <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-700">
-                    <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+
+        <main
+            class="flex-1 flex flex-col
+                   items-center justify-center
+                   p-4 sm:p-6
+                   overflow-y-auto
+                   custom-scrollbar"
+        >
+
+            <!-- WAITING -->
+            <div
+                id="part-state-waiting"
+                class="glass-panel p-8 rounded-2xl
+                       max-w-md w-full text-center hidden"
+            >
+
+                <div
+                    class="w-16 h-16 bg-slate-800
+                           rounded-full flex items-center
+                           justify-center mx-auto mb-4"
+                >
+                    ⏳
                 </div>
-                <h2 class="text-2xl font-bold mb-2">Game Not Started</h2>
-                <p class="text-slate-400">Please wait for the admin to start the timer. Get ready!</p>
+
+                <h2 class="text-2xl font-bold mb-2">
+                    Game Not Started
+                </h2>
+
+                <p class="text-slate-400">
+                    Please wait for the admin to start the game.
+                </p>
+
             </div>
 
-            <!-- State: Finished/Time Up -->
-            <div id="part-state-finished" class="glass-panel p-8 rounded-2xl max-w-md w-full text-center hidden">
-                <div class="w-16 h-16 bg-blue-900/50 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/50">
-                    <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+
+            <!-- FINISHED -->
+            <div
+                id="part-state-finished"
+                class="glass-panel p-8 rounded-2xl
+                       max-w-md w-full text-center hidden"
+            >
+
+                <div
+                    class="w-16 h-16 bg-blue-900/50
+                           rounded-full flex items-center
+                           justify-center mx-auto mb-4"
+                >
+                    ✓
                 </div>
-                <h2 class="text-2xl font-bold mb-2">Quiz Finished</h2>
-                <p class="text-slate-400">The time is up or the admin has ended the session. Great effort!</p>
+
+                <h2 class="text-2xl font-bold mb-2">
+                    Quiz Finished
+                </h2>
+
+                <p class="text-slate-400">
+                    The quiz has ended.
+                </p>
+
             </div>
 
-            <!-- State: Active Question -->
-            <div id="part-state-active" class="w-full max-w-2xl hidden flex-col gap-6">
-                <!-- Progress Indicator -->
-                <div class="flex items-center justify-between text-sm font-medium text-slate-400 mb-2 px-2">
-                    <span id="q-counter-display">Question 1</span>
-                    <span class="text-blue-400" id="q-status-msg"></span>
+
+            <!-- ACTIVE -->
+            <div
+                id="part-state-active"
+                class="w-full max-w-3xl
+                       hidden flex-col gap-6"
+            >
+
+                <div
+                    class="flex items-center
+                           justify-between
+                           text-sm font-medium
+                           text-slate-400"
+                >
+
+                    <span id="q-counter-display">
+                        Question 1
+                    </span>
+
+                    <span
+                        id="q-status-msg"
+                        class="text-blue-400"
+                    ></span>
+
                 </div>
 
-                <!-- Question Card -->
-                <div class="glass-panel p-1 rounded-2xl overflow-hidden shadow-2xl border-t border-slate-600/50">
-                    <div class="bg-slate-800/80 p-6 sm:p-8 rounded-xl flex flex-col gap-6">
-                        
-                        <!-- Media Container -->
-                        <div id="part-media-container" class="w-full bg-slate-900 rounded-lg overflow-hidden flex items-center justify-center min-h-[150px] border border-slate-700 hidden">
-                            <!-- Injected via JS -->
-                        </div>
 
-                        <!-- Text Content -->
-                        <div id="part-text-content" class="text-lg sm:text-xl text-white font-medium leading-relaxed">
+                <div
+                    class="glass-panel p-1
+                           rounded-2xl overflow-hidden
+                           shadow-2xl"
+                >
+
+                    <div
+                        class="bg-slate-800/80
+                               p-6 sm:p-8
+                               rounded-xl
+                               flex flex-col gap-6"
+                    >
+
+                        <!-- IMAGE -->
+                        <div
+                            id="part-media-container"
+                            class="w-full bg-slate-900
+                                   rounded-lg overflow-hidden
+                                   flex items-center
+                                   justify-center
+                                   min-h-[250px]
+                                   border border-slate-700
+                                   hidden"
+                        ></div>
+
+
+                        <!-- TEXT -->
+                        <div
+                            id="part-text-content"
+                            class="text-lg sm:text-xl
+                                   text-white font-medium
+                                   leading-relaxed
+                                   text-center"
+                        >
                             Loading question...
                         </div>
 
+
                         <hr class="border-slate-700">
 
-                        <!-- Answer Form -->
-                        <form id="form-answer" onsubmit="handleAnswerSubmit(event)" class="flex flex-col sm:flex-row gap-3">
-                            <input type="text" id="part-answer-input" autocomplete="off" placeholder="Enter your answer..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-lg shadow-inner placeholder-slate-600">
-                            <button type="submit" class="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg hover:shadow-blue-500/25 active:scale-95">
-                                Submit
+
+                        <!-- ANSWER -->
+                        <form
+                            id="form-answer"
+                            onsubmit="handleAnswerSubmit(event)"
+                            class="flex flex-col gap-3"
+                        >
+
+                            <input
+                                type="text"
+                                id="part-answer-input"
+                                autocomplete="off"
+                                placeholder="Enter your answer..."
+                                class="w-full bg-slate-900
+                                       border border-slate-700
+                                       rounded-xl px-4 py-4
+                                       text-white
+                                       text-lg text-center
+                                       focus:outline-none
+                                       focus:border-blue-500"
+                            >
+
+                            <button
+                                id="answer-submit-button"
+                                type="submit"
+                                class="bg-gradient-to-r
+                                       from-blue-600 to-blue-500
+                                       hover:from-blue-500
+                                       hover:to-blue-400
+                                       text-white font-bold
+                                       py-4 px-8 rounded-xl"
+                            >
+                                Submit Answer
                             </button>
+
                         </form>
+
                     </div>
                 </div>
             </div>
+
         </main>
     </div>
 
-    <script type="module">
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/+esm';
 
-        /* ----------------------------------------------------
-           1. SUPABASE CONFIGURATION
-           PASTE YOUR PROJECT URL AND ANON KEY HERE
-        ----------------------------------------------------- */
-        // Note: The URL must start with https://
-        const SUPABASE_URL = 'https://qhvyulgfdjjhzqnweuwg.supabase.co'; 
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFodnl1bGdmZGpqaHpxbndldXdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3NDUzODUsImV4cCI6MjEwNTMyMTM4NX0.7SqlrR3PLOyxLjdF0BIuRlPXRi4pbIQusF4YLB_bM3U';
-        
-        let supabase;
-        try {
-            supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        } catch (e) {
-            console.error("Supabase URL is invalid", e);
-        }
+<script type="module">
 
-        // State Variables
-        let currentUserRole = null; // 'admin', 'A', 'B', 'C', 'D'
-        
-        let allQuestions = [];
-        let allLogs = [];
-        let gameState = { status: 'waiting', startTime: null };
-        let teamState = { currentQuestionSeq: 1 };
-        
-        // Supabase Channel Subscriptions
-        let unsubGameState = null;
-        let unsubQuestions = null;
-        let unsubLogs = null;
-        let unsubTeam = null;
+/* =========================================================
+   SUPABASE
+========================================================= */
 
-        let timerInterval = null;
-        const TIME_LIMIT_MS = 60 * 60 * 1000; // 60 minutes
+import {
+    createClient
+} from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/+esm';
 
-        // Modal Functions
-        window.showModal = (title, message) => {
-            document.getElementById('modal-title').textContent = title;
-            document.getElementById('modal-message').textContent = message;
-            const modal = document.getElementById('custom-modal');
-            const content = document.getElementById('custom-modal-content');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                content.classList.remove('scale-95', 'opacity-0');
-                content.classList.add('scale-100', 'opacity-100');
-            }, 10);
-        };
 
-        window.closeModal = () => {
-            const modal = document.getElementById('custom-modal');
-            const content = document.getElementById('custom-modal-content');
-            content.classList.remove('scale-100', 'opacity-100');
-            content.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => modal.classList.add('hidden'), 200);
-        };
+const SUPABASE_URL =
+    'https://qhvyulgfdjjhzqnweuwg.supabase.co';
 
-        window.alertCustom = (msg) => window.showModal("Alert", msg);
+const SUPABASE_ANON_KEY =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFodnl1bGdmZGpqaHpxbndldXdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3NDUzODUsImV4cCI6MjEwNTMyMTM4NX0.7SqlrR3PLOyxLjdF0BIuRlPXRi4pbIQusF4YLB_bM3U';
 
-        // UI View Toggling
-        const showScreen = (screenId) => {
-            ['screen-login', 'screen-admin', 'screen-participant'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
-            });
-            if(screenId) document.getElementById(screenId).classList.remove('hidden');
-        };
 
-        const hideLoading = () => document.getElementById('loading-overlay').classList.add('hidden');
+const supabase =
+    createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+    );
 
-        // App Initialization
-        window.onload = () => {
-            hideLoading();
-            showScreen('screen-login');
-        };
 
-        // Login Logic
-        window.login = async (role) => {
-            if (!supabase) {
-                alertCustom("Database connection failed. Check console for errors.");
-                return;
-            }
+/* =========================================================
+   IMPORTANT: CHANGE THIS TO YOUR GITHUB FOLDER
+========================================================= */
 
-            if (role === 'admin') {
-                const passwordInput = document.getElementById('admin-password');
-                if (passwordInput.value !== 'admin@2026') {
-                    alertCustom("Incorrect admin password.");
-                    return;
+const GITHUB_BASE_URL =
+    'https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPOSITORY/main/';
+
+
+/* =========================================================
+   FIXED QUESTION BANK
+========================================================= */
+
+const DEFAULT_QUESTIONS = [
+
+    {
+        seq: 1,
+        type: 'image',
+        content: GITHUB_BASE_URL + '1.png',
+        answer: 'DHARMENDRA PRADHAN'
+    },
+
+    {
+        seq: 2,
+        type: 'image',
+        content: GITHUB_BASE_URL + '2.png',
+        answer: 'NATIONAL TESTING AGENCY'
+    },
+
+    {
+        seq: 3,
+        type: 'image',
+        content: GITHUB_BASE_URL + '3.png',
+        answer: 'CJP'
+    },
+
+    {
+        seq: 4,
+        type: 'image',
+        content: GITHUB_BASE_URL + '4.png',
+        answer: 'CULTUS'
+    },
+
+    {
+        seq: 5,
+        type: 'image',
+        content: GITHUB_BASE_URL + '5.png',
+        answer: "DATO' SERI ANWAR BIN IBRAHIM"
+    }
+
+];
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let currentUserRole = null;
+
+let allQuestions = [];
+
+let allLogs = [];
+
+let gameState = {
+    status: 'waiting',
+    startTime: null
+};
+
+let teamState = {
+    id: null,
+    currentQuestionSeq: 1
+};
+
+let timerInterval = null;
+
+let unsubGameState = null;
+let unsubQuestions = null;
+let unsubLogs = null;
+let unsubTeam = null;
+
+const TIME_LIMIT_MS =
+    60 * 60 * 1000;
+
+
+/* =========================================================
+   NORMALIZE ANSWER
+========================================================= */
+
+function normalizeAnswer(value) {
+
+    return String(value || '')
+        .trim()
+        .replace(/\s+/g, ' ')
+        .toUpperCase();
+
+}
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+window.showModal = function(title, message) {
+
+    document.getElementById(
+        'modal-title'
+    ).textContent = title;
+
+    document.getElementById(
+        'modal-message'
+    ).textContent = message;
+
+    const modal =
+        document.getElementById(
+            'custom-modal'
+        );
+
+    const content =
+        document.getElementById(
+            'custom-modal-content'
+        );
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    setTimeout(() => {
+
+        content.classList.remove(
+            'scale-95',
+            'opacity-0'
+        );
+
+        content.classList.add(
+            'scale-100',
+            'opacity-100'
+        );
+
+    }, 10);
+
+};
+
+
+window.closeModal = function() {
+
+    const modal =
+        document.getElementById(
+            'custom-modal'
+        );
+
+    const content =
+        document.getElementById(
+            'custom-modal-content'
+        );
+
+    content.classList.remove(
+        'scale-100',
+        'opacity-100'
+    );
+
+    content.classList.add(
+        'scale-95',
+        'opacity-0'
+    );
+
+    setTimeout(() => {
+
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+
+    }, 200);
+
+};
+
+
+window.alertCustom = function(message) {
+
+    window.showModal(
+        'Notice',
+        message
+    );
+
+};
+
+
+/* =========================================================
+   SCREEN
+========================================================= */
+
+function showScreen(screenId) {
+
+    [
+        'screen-login',
+        'screen-admin',
+        'screen-participant'
+    ].forEach(id => {
+
+        document
+            .getElementById(id)
+            .classList.add('hidden');
+
+    });
+
+    document
+        .getElementById(screenId)
+        .classList.remove('hidden');
+
+}
+
+
+/* =========================================================
+   INIT
+========================================================= */
+
+window.onload = async function() {
+
+    document.getElementById(
+        'github-base-display'
+    ).textContent =
+        'GitHub folder: ' +
+        GITHUB_BASE_URL;
+
+    await ensureCoreData();
+
+    document
+        .getElementById(
+            'loading-overlay'
+        )
+        .classList.add('hidden');
+
+    showScreen('screen-login');
+
+};
+
+
+/* =========================================================
+   CORE DATA
+========================================================= */
+
+async function ensureCoreData() {
+
+    const { error: gameError } =
+        await supabase
+            .from('game_state')
+            .upsert(
+                {
+                    id: 'core',
+                    status: 'waiting',
+                    startTime: null
+                },
+                {
+                    onConflict: 'id'
                 }
-                passwordInput.value = '';
-                currentUserRole = role;
-                showScreen('screen-admin');
-                setupAdminListeners();
-            } else {
-                currentUserRole = role;
-                showScreen('screen-participant');
-                document.getElementById('team-name-display').textContent = role;
-                document.getElementById('team-avatar').textContent = role;
-                await setupParticipantState(role);
-                setupParticipantListeners(role);
-            }
-        };
+            );
 
-        window.logout = () => {
-            // Cleanup Supabase Channels
-            if(unsubGameState) supabase.removeChannel(unsubGameState);
-            if(unsubQuestions) supabase.removeChannel(unsubQuestions);
-            if(unsubLogs) supabase.removeChannel(unsubLogs);
-            if(unsubTeam) supabase.removeChannel(unsubTeam);
-            if(timerInterval) clearInterval(timerInterval);
-            
-            currentUserRole = null;
-            showScreen('screen-login');
-        };
+    if (gameError) {
 
-        // -- Supabase Listeners -- 
-        async function listenToGameState() {
-            if(unsubGameState) supabase.removeChannel(unsubGameState);
-            
-            const fetchState = async () => {
-                const { data } = await supabase.from('game_state').select('*').eq('id', 'core').maybeSingle();
-                if (data) gameState = data;
-                else {
-                    gameState = { status: 'waiting', startTime: null };
-                    if(currentUserRole === 'admin') await supabase.from('game_state').upsert({ id: 'core', ...gameState });
+        console.error(
+            'Game state error:',
+            gameError
+        );
+
+    }
+
+
+    const teams = [
+        'A',
+        'B',
+        'C',
+        'D'
+    ].map(team => ({
+        id: team,
+        currentQuestionSeq: 1
+    }));
+
+
+    const { error: teamError } =
+        await supabase
+            .from('teams')
+            .upsert(
+                teams,
+                {
+                    onConflict: 'id',
+                    ignoreDuplicates: true
                 }
-                updateGlobalTimerUI();
-                if(currentUserRole === 'admin') renderAdminStatus();
-                else renderParticipantView();
-            };
+            );
 
-            await fetchState();
+    if (teamError) {
 
-            unsubGameState = supabase.channel('public:game_state')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'game_state', filter: 'id=eq.core' }, payload => {
-                    gameState = { ...gameState, ...payload.new };
-                    updateGlobalTimerUI();
-                    if(currentUserRole === 'admin') renderAdminStatus();
-                    else renderParticipantView();
-                }).subscribe();
+        console.error(
+            'Team initialization error:',
+            teamError
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   LOGIN
+========================================================= */
+
+window.login = async function(role) {
+
+    if (role === 'admin') {
+
+        const password =
+            document.getElementById(
+                'admin-password'
+            ).value;
+
+        if (password !== 'admin@2026') {
+
+            alertCustom(
+                'Incorrect admin password.'
+            );
+
+            return;
         }
 
-        async function listenToQuestions(callback) {
-            if(unsubQuestions) supabase.removeChannel(unsubQuestions);
+        currentUserRole = 'admin';
 
-            const fetchQuestions = async () => {
-                const { data } = await supabase.from('questions').select('*').order('seq', { ascending: true });
-                if (data) allQuestions = data;
-                if(callback) callback();
-            };
+        document.getElementById(
+            'admin-password'
+        ).value = '';
 
-            await fetchQuestions();
+        showScreen(
+            'screen-admin'
+        );
 
-            unsubQuestions = supabase.channel('public:questions')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'questions' }, async () => {
-                    await fetchQuestions(); 
-                }).subscribe();
+        setupAdminListeners();
+
+        return;
+    }
+
+
+    currentUserRole = role;
+
+    document.getElementById(
+        'team-name-display'
+    ).textContent = role;
+
+    document.getElementById(
+        'team-avatar'
+    ).textContent = role;
+
+    showScreen(
+        'screen-participant'
+    );
+
+    await setupParticipantState(role);
+
+    setupParticipantListeners(role);
+
+};
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+window.logout = function() {
+
+    if (unsubGameState) {
+        supabase.removeChannel(
+            unsubGameState
+        );
+        unsubGameState = null;
+    }
+
+    if (unsubQuestions) {
+        supabase.removeChannel(
+            unsubQuestions
+        );
+        unsubQuestions = null;
+    }
+
+    if (unsubLogs) {
+        supabase.removeChannel(
+            unsubLogs
+        );
+        unsubLogs = null;
+    }
+
+    if (unsubTeam) {
+        supabase.removeChannel(
+            unsubTeam
+        );
+        unsubTeam = null;
+    }
+
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+
+    currentUserRole = null;
+
+    showScreen(
+        'screen-login'
+    );
+
+};
+
+
+/* =========================================================
+   GAME STATE
+========================================================= */
+
+async function listenToGameState() {
+
+    if (unsubGameState) {
+
+        supabase.removeChannel(
+            unsubGameState
+        );
+
+    }
+
+
+    const fetchState = async () => {
+
+        const {
+            data,
+            error
+        } = await supabase
+            .from('game_state')
+            .select('*')
+            .eq('id', 'core')
+            .maybeSingle();
+
+
+        if (error) {
+
+            console.error(
+                'Game state fetch error:',
+                error
+            );
+
+            return;
         }
 
-        async function listenToLogs() {
-            if(unsubLogs) supabase.removeChannel(unsubLogs);
 
-            const fetchLogs = async () => {
-                const { data } = await supabase.from('logs').select('*').order('timestamp', { ascending: false });
-                if (data) {
-                    allLogs = data;
-                    renderAdminLogs();
-                }
-            };
+        if (data) {
 
-            await fetchLogs();
+            gameState = data;
 
-            unsubLogs = supabase.channel('public:logs')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'logs' }, async () => {
-                    await fetchLogs();
-                }).subscribe();
         }
 
-        // -- ADMIN LOGIC --
-        function setupAdminListeners() {
-            listenToGameState();
-            listenToQuestions(() => renderAdminQuestions());
-            listenToLogs();
-            
-            if(timerInterval) clearInterval(timerInterval);
-            timerInterval = setInterval(updateGlobalTimerUI, 1000);
+
+        updateGlobalTimerUI();
+
+
+        if (
+            currentUserRole === 'admin'
+        ) {
+
+            renderAdminStatus();
+
+        } else if (
+            currentUserRole
+        ) {
+
+            renderParticipantView();
+
         }
 
-        window.toggleGame = async (action) => {
-            if (action === 'start') {
-                await supabase.from('game_state').upsert({ id: 'core', status: 'active', startTime: Date.now() });
-            } else {
-                await supabase.from('game_state').upsert({ id: 'core', status: 'finished' });
-            }
-        };
+    };
 
-        window.resetGame = async () => {
-            await supabase.from('game_state').upsert({ id: 'core', status: 'waiting', startTime: null });
-            
-            const teamResets = ['A', 'B', 'C', 'D'].map(t => ({ id: t, currentQuestionSeq: 1 }));
-            await supabase.from('teams').upsert(teamResets);
-            
-            alertCustom("Game state and all team progressions reset.");
-        };
 
-        window.handleAddQuestion = async (e) => {
-            e.preventDefault();
-            const seq = parseInt(document.getElementById('q-seq').value);
-            const type = document.getElementById('q-type').value;
-            const content = document.getElementById('q-content').value;
-            const answer = document.getElementById('q-answer').value.toUpperCase().trim();
+    await fetchState();
 
-            try {
-                const { error } = await supabase.from('questions').insert([{ seq, type, content, answer }]);
-                if (error) {
-                    console.error("Insert error:", error);
-                    alertCustom("Failed to save: " + error.message + " (Make sure your Supabase tables are created)");
-                    return;
-                }
-                document.getElementById('form-add-q').reset();
-                document.getElementById('q-seq').value = seq + 1;
-            } catch(err) {
-                console.error("Add Q Error", err);
-                alertCustom("Failed to add question.");
-            }
-        };
 
-        window.seedQuestions = async () => {
-            const defaultQ = [
-                { seq: 1, type: 'image', content: '1.png', answer: 'DHARMENDRA PRADHAN' },
-                { seq: 2, type: 'image', content: '2.png', answer: 'NATIONAL TESTING AGENCY' },
-                { seq: 3, type: 'image', content: '3.png', answer: 'CJP' },
-                { seq: 4, type: 'image', content: '4.png', answer: 'CULTUS' },
-                { seq: 5, type: 'image', content: '5.png', answer: "DATO' SERI ANWAR BIN IBRAHIM" }
-            ];
-            
-            try {
-                const { error } = await supabase.from('questions').insert(defaultQ);
-                if (error) {
-                    alertCustom("Failed to load images: " + error.message);
-                } else {
-                    alertCustom("Successfully loaded all 5 GitHub image questions!");
-                }
-            } catch(err) {
-                console.error("Seed error", err);
-            }
-        };
+    unsubGameState =
+        supabase
+            .channel(
+                'game-state-channel'
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'game_state',
+                    filter: 'id=eq.core'
+                },
+                payload => {
 
-        window.deleteQuestion = async (id) => {
-            await supabase.from('questions').delete().eq('id', id);
-        };
+                    if (payload.new) {
 
-        function renderAdminStatus() {
-            const badge = document.getElementById('admin-status-badge');
-            const btnStart = document.getElementById('btn-start');
-            const btnStop = document.getElementById('btn-stop');
+                        gameState =
+                            payload.new;
 
-            badge.textContent = gameState.status;
-            
-            if (gameState.status === 'active') {
-                badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-green-900/50 text-green-400 border border-green-500/50";
-                btnStart.classList.add('hidden');
-                btnStop.classList.remove('hidden');
-            } else if (gameState.status === 'finished') {
-                badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-900/50 text-blue-400 border border-blue-500/50";
-                btnStart.classList.add('hidden');
-                btnStop.classList.remove('hidden'); 
-            } else {
-                badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-700 text-slate-300";
-                btnStart.classList.remove('hidden');
-                btnStop.classList.add('hidden');
-            }
-        }
+                        updateGlobalTimerUI();
 
-        function renderAdminQuestions() {
-            const list = document.getElementById('admin-q-list');
-            if (allQuestions.length === 0) {
-                list.innerHTML = '<p class="text-slate-500 text-sm">No questions added yet.</p>';
-                return;
-            }
+                        if (
+                            currentUserRole ===
+                            'admin'
+                        ) {
 
-            list.innerHTML = allQuestions.map(q => `
-                <div class="bg-slate-800 p-3 rounded-lg flex justify-between items-start border border-slate-700 group hover:border-slate-600 transition-colors">
-                    <div>
-                        <span class="inline-block bg-blue-900/50 text-blue-400 text-xs font-bold px-2 py-0.5 rounded mb-1">Q${q.seq} • ${q.type.toUpperCase()}</span>
-                        <p class="text-sm text-slate-200 truncate max-w-[200px] sm:max-w-xs" title="${q.content}">${q.content}</p>
-                        <p class="text-xs text-green-400 mt-1 font-mono">Ans: ${q.answer}</p>
-                    </div>
-                    <button onclick="deleteQuestion('${q.id}')" class="text-slate-500 hover:text-red-400 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    </button>
-                </div>
-            `).join('');
-        }
+                            renderAdminStatus();
 
-        function renderAdminLogs() {
-            const list = document.getElementById('admin-logs');
-            if (allLogs.length === 0) {
-                list.innerHTML = '<p class="text-slate-500 text-sm text-center mt-4">No activity yet</p>';
-                return;
-            }
+                        } else {
 
-            list.innerHTML = allLogs.map(log => {
-                const timeStr = new Date(log.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
-                return `
-                <div class="bg-slate-800/80 p-3 rounded-lg border-l-2 border-blue-500 text-sm animate-[fadeIn_0.3s_ease-out]">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="font-bold text-white">Team ${log.team}</span>
-                        <span class="text-xs text-slate-400">${timeStr}</span>
-                    </div>
-                    <p class="text-slate-300">Solved <span class="text-blue-400 font-semibold">Question ${log.qSeq}</span></p>
-                </div>
-                `;
-            }).join('');
-        }
+                            renderParticipantView();
 
-        // -- PARTICIPANT LOGIC --
-        async function setupParticipantState(teamId) {
-            const { data } = await supabase.from('teams').select('*').eq('id', teamId).maybeSingle();
-            if (!data) {
-                await supabase.from('teams').upsert({ id: teamId, currentQuestionSeq: 1 });
-            } else {
-                teamState = data;
-            }
-        }
-
-        async function setupParticipantListeners(teamId) {
-            listenToGameState();
-            listenToQuestions(() => renderParticipantView());
-            
-            if(unsubTeam) supabase.removeChannel(unsubTeam);
-            unsubTeam = supabase.channel(`public:teams:${teamId}`)
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'teams', filter: `id=eq.${teamId}` }, payload => {
-                    teamState = payload.new;
-                    renderParticipantView();
-                }).subscribe();
-
-            if(timerInterval) clearInterval(timerInterval);
-            timerInterval = setInterval(updateGlobalTimerUI, 1000);
-        }
-
-        window.handleAnswerSubmit = async (e) => {
-            e.preventDefault();
-            if (gameState.status !== 'active') return;
-
-            const input = document.getElementById('part-answer-input');
-            const userAnswer = input.value.toUpperCase().trim();
-            const currentQ = allQuestions.find(q => q.seq === teamState.currentQuestionSeq);
-
-            if (!currentQ) {
-                alertCustom("No question loaded.");
-                return;
-            }
-
-            if (userAnswer === currentQ.answer.toUpperCase().trim()) {
-                input.value = '';
-                const nextSeq = teamState.currentQuestionSeq + 1;
-                
-                await supabase.from('logs').insert([{ team: currentUserRole, qSeq: currentQ.seq, timestamp: Date.now() }]);
-                await supabase.from('teams').upsert({ id: currentUserRole, currentQuestionSeq: nextSeq });
-                
-                document.getElementById('q-status-msg').textContent = "Correct! Loading next...";
-                setTimeout(()=> { document.getElementById('q-status-msg').textContent = ""; }, 2000);
-
-            } else {
-                alertCustom("Incorrect answer. Try again!");
-                input.select();
-            }
-        };
-
-        function renderParticipantView() {
-            if(currentUserRole === 'admin' || !currentUserRole) return;
-
-            const viewWaiting = document.getElementById('part-state-waiting');
-            const viewFinished = document.getElementById('part-state-finished');
-            const viewActive = document.getElementById('part-state-active');
-
-            viewWaiting.classList.add('hidden');
-            viewFinished.classList.add('hidden');
-            viewActive.classList.add('hidden');
-
-            if (gameState.status === 'waiting') {
-                viewWaiting.classList.remove('hidden');
-            } else if (gameState.status === 'finished') {
-                viewFinished.classList.remove('hidden');
-            } else if (gameState.status === 'active') {
-                
-                const elapsed = Date.now() - gameState.startTime;
-                if (elapsed >= TIME_LIMIT_MS) {
-                    viewFinished.classList.remove('hidden');
-                    return;
-                }
-
-                viewActive.classList.remove('hidden');
-                viewActive.classList.add('flex');
-                renderActiveQuestion();
-            }
-        }
-
-        function renderActiveQuestion() {
-            const currentQ = allQuestions.find(q => q.seq === teamState.currentQuestionSeq);
-            
-            document.getElementById('q-counter-display').textContent = `Question ${teamState.currentQuestionSeq}`;
-            
-            const txtContainer = document.getElementById('part-text-content');
-            const mediaContainer = document.getElementById('part-media-container');
-
-            if (!currentQ) {
-                txtContainer.innerHTML = '<span class="text-green-400 font-bold text-2xl flex items-center justify-center gap-3">🎉 You have solved all questions!</span>';
-                mediaContainer.classList.add('hidden');
-                document.getElementById('form-answer').classList.add('hidden');
-                return;
-            }
-
-            document.getElementById('form-answer').classList.remove('hidden');
-            mediaContainer.innerHTML = '';
-            mediaContainer.classList.add('hidden');
-
-            if (currentQ.type === 'text') {
-                txtContainer.textContent = currentQ.content;
-            } else if (currentQ.type === 'image') {
-                txtContainer.textContent = "Analyze the image below:";
-                mediaContainer.classList.remove('hidden');
-                
-                // Smart path resolution
-                let mediaSrc = currentQ.content.trim();
-                if (!mediaSrc.startsWith('http') && !mediaSrc.startsWith('./') && !mediaSrc.startsWith('/')) {
-                    mediaSrc = './' + mediaSrc;
-                }
-                
-                mediaContainer.innerHTML = `<img src="${mediaSrc}" class="max-w-full h-auto max-h-[400px] object-contain rounded" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'flex flex-col items-center justify-center p-6 text-center\\'><span class=\\'text-red-400 font-bold mb-2\\'>Failed to load image</span><code class=\\'bg-slate-950 text-slate-300 px-2 py-1 rounded text-sm mb-2 break-all\\'>' + this.src + '</code><span class=\\'text-xs text-slate-500\\'>Check GitHub: Ensure the file is in the exact same folder as index.html and the case matches exactly (e.g., .png vs .PNG)</span></div>'">`;
-            } else if (currentQ.type === 'video') {
-                txtContainer.textContent = "Watch the video below:";
-                mediaContainer.classList.remove('hidden');
-                
-                // Smart path resolution
-                let mediaSrc = currentQ.content.trim();
-                if (!mediaSrc.startsWith('http') && !mediaSrc.startsWith('./') && !mediaSrc.startsWith('/')) {
-                    mediaSrc = './' + mediaSrc;
-                }
-                
-                mediaContainer.innerHTML = `<video src="${mediaSrc}" controls class="max-w-full w-full max-h-[400px] rounded bg-black" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'flex flex-col items-center justify-center p-6 text-center\\'><span class=\\'text-red-400 font-bold mb-2\\'>Failed to load video</span><code class=\\'bg-slate-950 text-slate-300 px-2 py-1 rounded text-sm mb-2 break-all\\'>' + this.src + '</code></div>'"></video>`;
-            }
-        }
-
-        function updateGlobalTimerUI() {
-            let displayStr = "--:--";
-            
-            if (gameState.status === 'active' && gameState.startTime) {
-                const elapsed = Date.now() - gameState.startTime;
-                let left = TIME_LIMIT_MS - elapsed;
-                
-                if (left <= 0) {
-                    left = 0;
-                    if(currentUserRole !== 'admin' && currentUserRole !== null) {
-                         renderParticipantView(); 
-                    }
-                }
-                
-                const mins = Math.floor(left / 60000);
-                const secs = Math.floor((left % 60000) / 1000);
-                displayStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-            }
-
-            const adminTimer = document.getElementById('admin-timer');
-            if (adminTimer) adminTimer.textContent = displayStr;
-            
-            const partTimer = document.getElementById('participant-timer');
-            if (partTimer) partTimer.textContent = displayStr;
-            
-            if(gameState.status === 'active' && gameState.startTime) {
-                const elapsed = Date.now() - gameState.startTime;
-                if((TIME_LIMIT_MS - elapsed) < (5 * 60 * 1000) && (TIME_LIMIT_MS - elapsed) > 0) {
-                    if(adminTimer) adminTimer.classList.replace('text-blue-400', 'text-red-400');
-                    if(partTimer) partTimer.classList.replace('text-white', 'text-red-400');
-                } else {
-                    if(adminTimer) adminTimer.classList.replace('text-red-400', 'text-blue-400');
-                    if(partTimer) partTimer.classList.replace('text-red-400', 'text-white');
-                }
-            }
-        }
-
-        tailwind.config = {
-            theme: {
-                extend: {
-                    keyframes: {
-                        fadeIn: {
-                            '0%': { opacity: '0', transform: 'translateY(5px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
                         }
+
                     }
+
                 }
+            )
+            .subscribe();
+
+}
+
+
+/* =========================================================
+   QUESTIONS
+========================================================= */
+
+async function listenToQuestions(callback) {
+
+    if (unsubQuestions) {
+
+        supabase.removeChannel(
+            unsubQuestions
+        );
+
+    }
+
+
+    const fetchQuestions =
+        async () => {
+
+            const {
+                data,
+                error
+            } = await supabase
+                .from('questions')
+                .select('*')
+                .order(
+                    'seq',
+                    {
+                        ascending: true
+                    }
+                );
+
+
+            if (error) {
+
+                console.error(
+                    'Questions fetch error:',
+                    error
+                );
+
+                alertCustom(
+                    'Could not load questions: ' +
+                    error.message
+                );
+
+                return;
             }
+
+
+            allQuestions =
+                data || [];
+
+
+            if (callback) {
+                callback();
+            }
+
+        };
+
+
+    await fetchQuestions();
+
+
+    unsubQuestions =
+        supabase
+            .channel(
+                'questions-channel'
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'questions'
+                },
+                async () => {
+
+                    await fetchQuestions();
+
+                }
+            )
+            .subscribe();
+
+}
+
+
+/* =========================================================
+   LOGS
+========================================================= */
+
+async function listenToLogs() {
+
+    if (unsubLogs) {
+
+        supabase.removeChannel(
+            unsubLogs
+        );
+
+    }
+
+
+    const fetchLogs =
+        async () => {
+
+            const {
+                data,
+                error
+            } = await supabase
+                .from('logs')
+                .select('*')
+                .order(
+                    'timestamp',
+                    {
+                        ascending: false
+                    }
+                );
+
+
+            if (error) {
+
+                console.error(
+                    'Logs error:',
+                    error
+                );
+
+                return;
+            }
+
+
+            allLogs =
+                data || [];
+
+            renderAdminLogs();
+
+        };
+
+
+    await fetchLogs();
+
+
+    unsubLogs =
+        supabase
+            .channel(
+                'logs-channel'
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'logs'
+                },
+                async () => {
+
+                    await fetchLogs();
+
+                }
+            )
+            .subscribe();
+
+}
+
+
+/* =========================================================
+   ADMIN LISTENERS
+========================================================= */
+
+function setupAdminListeners() {
+
+    listenToGameState();
+
+    listenToQuestions(
+        renderAdminQuestions
+    );
+
+    listenToLogs();
+
+
+    if (timerInterval) {
+        clearInterval(timerInterval);
+    }
+
+    timerInterval =
+        setInterval(
+            updateGlobalTimerUI,
+            1000
+        );
+
+}
+
+
+/* =========================================================
+   START / STOP
+========================================================= */
+
+window.toggleGame =
+    async function(action) {
+
+    if (action === 'start') {
+
+        const {
+            error
+        } = await supabase
+            .from('game_state')
+            .upsert(
+                {
+                    id: 'core',
+                    status: 'active',
+                    startTime: Date.now()
+                },
+                {
+                    onConflict: 'id'
+                }
+            );
+
+
+        if (error) {
+
+            console.error(
+                error
+            );
+
+            alertCustom(
+                'Could not start game: ' +
+                error.message
+            );
+
+            return;
         }
-    </script>
+
+    } else {
+
+        const {
+            error
+        } = await supabase
+            .from('game_state')
+            .upsert(
+                {
+                    id: 'core',
+                    status: 'finished'
+                },
+                {
+                    onConflict: 'id'
+                }
+            );
+
+
+        if (error) {
+
+            alertCustom(
+                'Could not stop game: ' +
+                error.message
+            );
+
+        }
+
+    }
+
+};
+
+
+/* =========================================================
+   RESET GAME
+========================================================= */
+
+window.resetGame =
+    async function() {
+
+    const {
+        error: gameError
+    } = await supabase
+        .from('game_state')
+        .upsert(
+            {
+                id: 'core',
+                status: 'waiting',
+                startTime: null
+            },
+            {
+                onConflict: 'id'
+            }
+        );
+
+
+    if (gameError) {
+
+        alertCustom(
+            'Reset failed: ' +
+            gameError.message
+        );
+
+        return;
+    }
+
+
+    const resets =
+        ['A', 'B', 'C', 'D']
+        .map(team => ({
+            id: team,
+            currentQuestionSeq: 1
+        }));
+
+
+    const {
+        error: teamError
+    } = await supabase
+        .from('teams')
+        .upsert(
+            resets,
+            {
+                onConflict: 'id'
+            }
+        );
+
+
+    if (teamError) {
+
+        alertCustom(
+            'Team reset failed: ' +
+            teamError.message
+        );
+
+        return;
+    }
+
+
+    alertCustom(
+        'Game reset successfully. All teams are back at Question 1.'
+    );
+
+};
+
+
+/* =========================================================
+   ADD QUESTION
+========================================================= */
+
+window.handleAddQuestion =
+    async function(e) {
+
+    e.preventDefault();
+
+
+    const button =
+        document.getElementById(
+            'btn-add-question'
+        );
+
+
+    const seq =
+        parseInt(
+            document.getElementById(
+                'q-seq'
+            ).value
+        );
+
+
+    const type =
+        document.getElementById(
+            'q-type'
+        ).value;
+
+
+    const content =
+        document.getElementById(
+            'q-content'
+        ).value.trim();
+
+
+    const answer =
+        normalizeAnswer(
+            document.getElementById(
+                'q-answer'
+            ).value
+        );
+
+
+    if (!seq || !content || !answer) {
+
+        alertCustom(
+            'Please fill all fields.'
+        );
+
+        return;
+    }
+
+
+    button.disabled = true;
+
+    button.textContent =
+        'Saving...';
+
+
+    try {
+
+        /*
+         * IMPORTANT:
+         * Supabase returns {data,error}.
+         * It does NOT necessarily throw.
+         */
+
+        const {
+            data,
+            error
+        } = await supabase
+            .from('questions')
+            .insert([
+                {
+                    seq: seq,
+                    type: type,
+                    content: content,
+                    answer: answer
+                }
+            ])
+            .select()
+            .single();
+
+
+        if (error) {
+
+            console.error(
+                'SAVE QUESTION ERROR:',
+                error
+            );
+
+            throw new Error(
+                error.message
+            );
+
+        }
+
+
+        if (!data) {
+
+            throw new Error(
+                'Supabase did not return the saved question.'
+            );
+
+        }
+
+
+        /*
+         * Immediately add to local list.
+         * Realtime will also update it.
+         */
+
+        const existingIndex =
+            allQuestions.findIndex(
+                q => q.seq === data.seq
+            );
+
+
+        if (existingIndex >= 0) {
+
+            allQuestions[
+                existingIndex
+            ] = data;
+
+        } else {
+
+            allQuestions.push(
+                data
+            );
+
+        }
+
+
+        allQuestions.sort(
+            (a, b) =>
+                a.seq - b.seq
+        );
+
+
+        renderAdminQuestions();
+
+
+        document
+            .getElementById(
+                'form-add-q'
+            )
+            .reset();
+
+
+        document.getElementById(
+            'q-seq'
+        ).value =
+            seq + 1;
+
+
+        alertCustom(
+            'Question ' +
+            seq +
+            ' saved successfully.'
+        );
+
+
+    } catch (err) {
+
+        console.error(
+            'Add Question Error:',
+            err
+        );
+
+        alertCustom(
+            'Failed to save question.\n\n' +
+            err.message +
+            '\n\nCheck your Supabase table and RLS policies.'
+        );
+
+    } finally {
+
+        button.disabled = false;
+
+        button.textContent =
+            'Save Question';
+
+    }
+
+};
+
+
+/* =========================================================
+   ADD DEFAULT GITHUB QUESTIONS
+========================================================= */
+
+window.loadDefaultQuestions =
+    async function() {
+
+    const confirmAdd =
+        confirm(
+            'Add the 5 GitHub image questions?'
+        );
+
+    if (!confirmAdd) {
+        return;
+    }
+
+
+    let saved = 0;
+    let skipped = 0;
+
+
+    for (
+        const question
+        of DEFAULT_QUESTIONS
+    ) {
+
+        /*
+         * Check whether sequence already exists.
+         */
+
+        const {
+            data: existing,
+            error: checkError
+        } = await supabase
+            .from('questions')
+            .select('id,seq')
+            .eq(
+                'seq',
+                question.seq
+            )
+            .maybeSingle();
+
+
+        if (checkError) {
+
+            console.error(
+                checkError
+            );
+
+            alertCustom(
+                'Could not check Question ' +
+                question.seq +
+                ': ' +
+                checkError.message
+            );
+
+            return;
+        }
+
+
+        if (existing) {
+
+            skipped++;
+
+            continue;
+
+        }
+
+
+        const {
+            error
+        } = await supabase
+            .from('questions')
+            .insert([
+                {
+                    seq: question.seq,
+                    type: question.type,
+                    content: question.content,
+                    answer: question.answer
+                }
+            ]);
+
+
+        if (error) {
+
+            console.error(
+                'Question ' +
+                question.seq +
+                ' error:',
+                error
+            );
+
+            alertCustom(
+                'Question ' +
+                question.seq +
+                ' failed:\n' +
+                error.message
+            );
+
+            return;
+        }
+
+
+        saved++;
+
+    }
+
+
+    await reloadQuestions();
+
+
+    alertCustom(
+        saved +
+        ' question(s) added.\n' +
+        skipped +
+        ' question(s) already existed.'
+    );
+
+};
+
+
+/* =========================================================
+   RELOAD QUESTIONS
+========================================================= */
+
+async function reloadQuestions() {
+
+    const {
+        data,
+        error
+    } = await supabase
+        .from('questions')
+        .select('*')
+        .order(
+            'seq',
+            {
+                ascending: true
+            }
+        );
+
+
+    if (error) {
+
+        console.error(
+            error
+        );
+
+        return;
+
+    }
+
+
+    allQuestions =
+        data || [];
+
+
+    renderAdminQuestions();
+
+    if (
+        currentUserRole !== 'admin'
+    ) {
+
+        renderParticipantView();
+
+    }
+
+}
+
+
+/* =========================================================
+   DELETE QUESTION
+========================================================= */
+
+window.deleteQuestion =
+    async function(id) {
+
+    const ok =
+        confirm(
+            'Delete this question?'
+        );
+
+    if (!ok) {
+        return;
+    }
+
+
+    const {
+        error
+    } = await supabase
+        .from('questions')
+        .delete()
+        .eq(
+            'id',
+            id
+        );
+
+
+    if (error) {
+
+        console.error(
+            error
+        );
+
+        alertCustom(
+            'Delete failed: ' +
+            error.message
+        );
+
+        return;
+    }
+
+
+    await reloadQuestions();
+
+};
+
+
+/* =========================================================
+   ADMIN STATUS
+========================================================= */
+
+function renderAdminStatus() {
+
+    const badge =
+        document.getElementById(
+            'admin-status-badge'
+        );
+
+    const start =
+        document.getElementById(
+            'btn-start'
+        );
+
+    const stop =
+        document.getElementById(
+            'btn-stop'
+        );
+
+
+    badge.textContent =
+        gameState.status;
+
+
+    if (
+        gameState.status ===
+        'active'
+    ) {
+
+        badge.className =
+            'px-3 py-1 rounded-full text-xs font-bold uppercase bg-green-900/50 text-green-400 border border-green-500/50';
+
+        start.classList.add(
+            'hidden'
+        );
+
+        stop.classList.remove(
+            'hidden'
+        );
+
+    } else if (
+        gameState.status ===
+        'finished'
+    ) {
+
+        badge.className =
+            'px-3 py-1 rounded-full text-xs font-bold uppercase bg-blue-900/50 text-blue-400 border border-blue-500/50';
+
+        start.classList.remove(
+            'hidden'
+        );
+
+        stop.classList.add(
+            'hidden'
+        );
+
+    } else {
+
+        badge.className =
+            'px-3 py-1 rounded-full text-xs font-bold uppercase bg-slate-700 text-slate-300';
+
+        start.classList.remove(
+            'hidden'
+        );
+
+        stop.classList.add(
+            'hidden'
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   ADMIN QUESTION LIST
+========================================================= */
+
+function renderAdminQuestions() {
+
+    const list =
+        document.getElementById(
+            'admin-q-list'
+        );
+
+
+    if (
+        allQuestions.length === 0
+    ) {
+
+        list.innerHTML =
+            '<p class="text-slate-500 text-sm">No questions added yet.</p>';
+
+        return;
+
+    }
+
+
+    list.innerHTML =
+        allQuestions
+            .map(q => `
+
+                <div
+                    class="bg-slate-800 p-4
+                           rounded-lg
+                           border border-slate-700"
+                >
+
+                    <div
+                        class="flex justify-between
+                               items-start gap-3"
+                    >
+
+                        <div class="min-w-0">
+
+                            <span
+                                class="inline-block
+                                       bg-blue-900/50
+                                       text-blue-400
+                                       text-xs font-bold
+                                       px-2 py-1 rounded mb-2"
+                            >
+                                Q${q.seq}
+                                •
+                                ${String(q.type).toUpperCase()}
+                            </span>
+
+                            <p
+                                class="text-sm
+                                       text-slate-200
+                                       break-all"
+                            >
+                                ${escapeHtml(q.content)}
+                            </p>
+
+                            <p
+                                class="text-xs
+                                       text-green-400
+                                       mt-2 font-mono"
+                            >
+                                Answer:
+                                ${escapeHtml(q.answer)}
+                            </p>
+
+                        </div>
+
+                        <button
+                            onclick="deleteQuestion('${q.id}')"
+                            class="text-red-400
+                                   hover:text-red-300
+                                   px-2 py-1"
+                        >
+                            Delete
+                        </button>
+
+                    </div>
+
+                </div>
+
+            `)
+            .join('');
+
+}
+
+
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
+
+function escapeHtml(value) {
+
+    return String(value || '')
+        .replace(
+            /&/g,
+            '&amp;'
+        )
+        .replace(
+            /</g,
+            '&lt;'
+        )
+        .replace(
+            />/g,
+            '&gt;'
+        )
+        .replace(
+            /"/g,
+            '&quot;'
+        )
+        .replace(
+            /'/g,
+            '&#039;'
+        );
+
+}
+
+
+/* =========================================================
+   ADMIN LOGS
+========================================================= */
+
+function renderAdminLogs() {
+
+    const list =
+        document.getElementById(
+            'admin-logs'
+        );
+
+
+    if (
+        allLogs.length === 0
+    ) {
+
+        list.innerHTML =
+            '<p class="text-slate-500 text-sm text-center mt-4">No activity yet</p>';
+
+        return;
+
+    }
+
+
+    list.innerHTML =
+        allLogs.map(log => {
+
+            const time =
+                new Date(
+                    Number(
+                        log.timestamp
+                    )
+                ).toLocaleTimeString(
+                    [],
+                    {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    }
+                );
+
+
+            return `
+
+                <div
+                    class="bg-slate-800/80
+                           p-3 rounded-lg
+                           border-l-2 border-blue-500"
+                >
+
+                    <div
+                        class="flex justify-between
+                               items-center mb-1"
+                    >
+
+                        <span
+                            class="font-bold text-white"
+                        >
+                            Team ${escapeHtml(log.team)}
+                        </span>
+
+                        <span
+                            class="text-xs
+                                   text-slate-400"
+                        >
+                            ${time}
+                        </span>
+
+                    </div>
+
+                    <p class="text-slate-300">
+                        Solved
+                        <span class="text-blue-400
+                                     font-semibold">
+                            Question ${log.qSeq}
+                        </span>
+                    </p>
+
+                </div>
+
+            `;
+
+        }).join('');
+
+}
+
+
+/* =========================================================
+   PARTICIPANT STATE
+========================================================= */
+
+async function setupParticipantState(
+    teamId
+) {
+
+    const {
+        data,
+        error
+    } = await supabase
+        .from('teams')
+        .select('*')
+        .eq(
+            'id',
+            teamId
+        )
+        .maybeSingle();
+
+
+    if (error) {
+
+        console.error(
+            error
+        );
+
+        alertCustom(
+            'Could not load Team ' +
+            teamId +
+            ': ' +
+            error.message
+        );
+
+        return;
+    }
+
+
+    if (!data) {
+
+        const {
+            data: created,
+            error: createError
+        } = await supabase
+            .from('teams')
+            .insert([
+                {
+                    id: teamId,
+                    currentQuestionSeq: 1
+                }
+            ])
+            .select()
+            .single();
+
+
+        if (createError) {
+
+            alertCustom(
+                'Could not create team: ' +
+                createError.message
+            );
+
+            return;
+        }
+
+
+        teamState =
+            created;
+
+    } else {
+
+        teamState =
+            data;
+
+    }
+
+}
+
+
+/* =========================================================
+   PARTICIPANT LISTENERS
+========================================================= */
+
+function setupParticipantListeners(
+    teamId
+) {
+
+    listenToGameState();
+
+    listenToQuestions(
+        renderParticipantView
+    );
+
+
+    if (unsubTeam) {
+
+        supabase.removeChannel(
+            unsubTeam
+        );
+
+    }
+
+
+    unsubTeam =
+        supabase
+            .channel(
+                'team-' + teamId
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'teams',
+                    filter:
+                        `id=eq.${teamId}`
+                },
+                payload => {
+
+                    if (
+                        payload.new
+                    ) {
+
+                        teamState =
+                            payload.new;
+
+                        renderParticipantView();
+
+                    }
+
+                }
+            )
+            .subscribe();
+
+
+    if (timerInterval) {
+        clearInterval(timerInterval);
+    }
+
+    timerInterval =
+        setInterval(
+            updateGlobalTimerUI,
+            1000
+        );
+
+}
+
+
+/* =========================================================
+   ANSWER SUBMIT
+========================================================= */
+
+window.handleAnswerSubmit =
+    async function(e) {
+
+    e.preventDefault();
+
+
+    if (
+        currentUserRole ===
+        'admin'
+    ) {
+        return;
+    }
+
+
+    if (
+        gameState.status !==
+        'active'
+    ) {
+
+        alertCustom(
+            'The game is not active.'
+        );
+
+        return;
+
+    }
+
+
+    const input =
+        document.getElementById(
+            'part-answer-input'
+        );
+
+
+    const button =
+        document.getElementById(
+            'answer-submit-button'
+        );
+
+
+    const userAnswer =
+        normalizeAnswer(
+            input.value
+        );
+
+
+    if (!userAnswer) {
+
+        alertCustom(
+            'Please enter an answer.'
+        );
+
+        input.focus();
+
+        return;
+
+    }
+
+
+    /*
+     * ALWAYS get the question based
+     * on the team's current sequence.
+     */
+
+    const currentSeq =
+        Number(
+            teamState.currentQuestionSeq
+        );
+
+
+    const currentQ =
+        allQuestions.find(
+            q =>
+                Number(q.seq) ===
+                currentSeq
+        );
+
+
+    if (!currentQ) {
+
+        alertCustom(
+            'Question ' +
+            currentSeq +
+            ' could not be found.'
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * DISABLE BUTTON while checking.
+     */
+
+    button.disabled = true;
+
+    button.textContent =
+        'Checking...';
+
+
+    const correctAnswer =
+        normalizeAnswer(
+            currentQ.answer
+        );
+
+
+    /*
+     * WRONG ANSWER
+     *
+     * Do NOT update teamState.
+     * Therefore participant stays
+     * on exactly the same question.
+     */
+
+    if (
+        userAnswer !==
+        correctAnswer
+    ) {
+
+        button.disabled = false;
+
+        button.textContent =
+            'Submit Answer';
+
+
+        input.classList.remove(
+            'shake'
+        );
+
+        void input.offsetWidth;
+
+        input.classList.add(
+            'shake'
+        );
+
+
+        document.getElementById(
+            'q-status-msg'
+        ).textContent =
+            '❌ Incorrect — try again';
+
+
+        document.getElementById(
+            'q-status-msg'
+        ).className =
+            'text-red-400 font-semibold';
+
+
+        setTimeout(() => {
+
+            document.getElementById(
+                'q-status-msg'
+            ).textContent = '';
+
+        }, 1800);
+
+
+        input.select();
+
+        return;
+
+    }
+
+
+    /*
+     * CORRECT ANSWER
+     */
+
+    const nextSeq =
+        currentSeq + 1;
+
+
+    /*
+     * First save the solved-question log.
+     */
+
+    const {
+        error: logError
+    } = await supabase
+        .from('logs')
+        .insert([
+            {
+                team: currentUserRole,
+                qSeq: currentSeq,
+                timestamp: Date.now()
+            }
+        ]);
+
+
+    if (logError) {
+
+        console.error(
+            'Log error:',
+            logError
+        );
+
+        button.disabled = false;
+
+        button.textContent =
+            'Submit Answer';
+
+
+        alertCustom(
+            'Could not save your progress: ' +
+            logError.message
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * IMPORTANT:
+     * Only move to next question
+     * after Supabase successfully
+     * accepts the update.
+     */
+
+    const {
+        error: teamError
+    } = await supabase
+        .from('teams')
+        .update({
+            currentQuestionSeq:
+                nextSeq
+        })
+        .eq(
+            'id',
+            currentUserRole
+        );
+
+
+    if (teamError) {
+
+        console.error(
+            'Team progress error:',
+            teamError
+        );
+
+        button.disabled = false;
+
+        button.textContent =
+            'Submit Answer';
+
+
+        alertCustom(
+            'Correct answer, but progress could not be saved:\n' +
+            teamError.message
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Update local state immediately.
+     */
+
+    teamState.currentQuestionSeq =
+        nextSeq;
+
+
+    input.value = '';
+
+
+    button.disabled = false;
+
+    button.textContent =
+        'Submit Answer';
+
+
+    const status =
+        document.getElementById(
+            'q-status-msg'
+        );
+
+
+    status.textContent =
+        '✓ Correct! Next question...';
+
+    status.className =
+        'text-green-400 font-semibold';
+
+
+    /*
+     * Render next question.
+     */
+
+    renderParticipantView();
+
+
+    setTimeout(() => {
+
+        status.textContent = '';
+
+    }, 1800);
+
+};
+
+
+/* =========================================================
+   PARTICIPANT VIEW
+========================================================= */
+
+function renderParticipantView() {
+
+    if (
+        !currentUserRole ||
+        currentUserRole ===
+        'admin'
+    ) {
+
+        return;
+
+    }
+
+
+    const waiting =
+        document.getElementById(
+            'part-state-waiting'
+        );
+
+    const finished =
+        document.getElementById(
+            'part-state-finished'
+        );
+
+    const active =
+        document.getElementById(
+            'part-state-active'
+        );
+
+
+    waiting.classList.add(
+        'hidden'
+    );
+
+    finished.classList.add(
+        'hidden'
+    );
+
+    active.classList.add(
+        'hidden'
+    );
+
+    active.classList.remove(
+        'flex'
+    );
+
+
+    if (
+        gameState.status ===
+        'waiting'
+    ) {
+
+        waiting.classList.remove(
+            'hidden'
+        );
+
+        return;
+
+    }
+
+
+    if (
+        gameState.status ===
+        'finished'
+    ) {
+
+        finished.classList.remove(
+            'hidden'
+        );
+
+        return;
+
+    }
+
+
+    if (
+        gameState.status ===
+        'active'
+    ) {
+
+        const elapsed =
+            Date.now() -
+            Number(
+                gameState.startTime
+            );
+
+
+        if (
+            elapsed >=
+            TIME_LIMIT_MS
+        ) {
+
+            finished.classList.remove(
+                'hidden'
+            );
+
+            return;
+
+        }
+
+
+        active.classList.remove(
+            'hidden'
+        );
+
+        active.classList.add(
+            'flex'
+        );
+
+
+        renderActiveQuestion();
+
+    }
+
+}
+
+
+/* =========================================================
+   ACTIVE QUESTION
+========================================================= */
+
+function renderActiveQuestion() {
+
+    const currentSeq =
+        Number(
+            teamState.currentQuestionSeq
+        );
+
+
+    const currentQ =
+        allQuestions.find(
+            q =>
+                Number(q.seq) ===
+                currentSeq
+        );
+
+
+    document.getElementById(
+        'q-counter-display'
+    ).textContent =
+        'Question ' +
+        currentSeq;
+
+
+    const text =
+        document.getElementById(
+            'part-text-content'
+        );
+
+
+    const media =
+        document.getElementById(
+            'part-media-container'
+        );
+
+
+    const form =
+        document.getElementById(
+            'form-answer'
+        );
+
+
+    if (!currentQ) {
+
+        text.innerHTML =
+            `
+            <div class="text-green-400
+                        font-bold text-2xl
+                        text-center">
+                🎉 All Questions Solved!
+            </div>
+            `;
+
+        media.classList.add(
+            'hidden'
+        );
+
+        form.classList.add(
+            'hidden'
+        );
+
+        return;
+
+    }
+
+
+    form.classList.remove(
+        'hidden'
+    );
+
+
+    media.innerHTML = '';
+
+    media.classList.add(
+        'hidden'
+    );
+
+
+    if (
+        currentQ.type ===
+        'image'
+    ) {
+
+        text.textContent =
+            'Identify the answer from the image:';
+
+
+        media.classList.remove(
+            'hidden'
+        );
+
+
+        const img =
+            document.createElement(
+                'img'
+            );
+
+
+        img.src =
+            currentQ.content;
+
+        img.alt =
+            'Question ' +
+            currentSeq;
+
+        img.className =
+            'max-w-full h-auto max-h-[500px] object-contain rounded';
+
+
+        img.onerror =
+            function() {
+
+                media.innerHTML =
+                    `
+                    <div class="text-red-400
+                                p-6 text-center">
+                        Failed to load image.<br>
+                        <span class="text-xs
+                                     text-slate-500">
+                            ${escapeHtml(currentQ.content)}
+                        </span>
+                    </div>
+                    `;
+
+            };
+
+
+        media.appendChild(
+            img
+        );
+
+
+    } else if (
+        currentQ.type ===
+        'video'
+    ) {
+
+        text.textContent =
+            'Watch the video and answer:';
+
+
+        media.classList.remove(
+            'hidden'
+        );
+
+
+        media.innerHTML =
+            `
+            <video
+                src="${escapeHtml(currentQ.content)}"
+                controls
+                class="max-w-full w-full
+                       max-h-[500px]
+                       rounded bg-black"
+            ></video>
+            `;
+
+
+    } else {
+
+        text.textContent =
+            currentQ.content;
+
+    }
+
+
+    document.getElementById(
+        'part-answer-input'
+    ).focus();
+
+}
+
+
+/* =========================================================
+   TIMER
+========================================================= */
+
+function updateGlobalTimerUI() {
+
+    let display =
+        '60:00';
+
+
+    if (
+        gameState.status ===
+        'active' &&
+        gameState.startTime
+    ) {
+
+        const elapsed =
+            Date.now() -
+            Number(
+                gameState.startTime
+            );
+
+
+        let remaining =
+            TIME_LIMIT_MS -
+            elapsed;
+
+
+        if (
+            remaining < 0
+        ) {
+
+            remaining = 0;
+
+        }
+
+
+        const minutes =
+            Math.floor(
+                remaining / 60000
+            );
+
+
+        const seconds =
+            Math.floor(
+                (remaining % 60000) /
+                1000
+            );
+
+
+        display =
+            String(minutes)
+                .padStart(2, '0')
+            +
+            ':' +
+            String(seconds)
+                .padStart(2, '0');
+
+
+        if (
+            remaining === 0 &&
+            currentUserRole !==
+            'admin' &&
+            currentUserRole
+        ) {
+
+            renderParticipantView();
+
+        }
+
+    }
+
+
+    const adminTimer =
+        document.getElementById(
+            'admin-timer'
+        );
+
+
+    const participantTimer =
+        document.getElementById(
+            'participant-timer'
+        );
+
+
+    if (adminTimer) {
+
+        adminTimer.textContent =
+            display;
+
+    }
+
+
+    if (participantTimer) {
+
+        participantTimer.textContent =
+            display;
+
+    }
+
+}
+
+
+/* =========================================================
+   TAILWIND
+========================================================= */
+
+tailwind.config = {
+
+    theme: {
+
+        extend: {
+
+            keyframes: {
+
+                fadeIn: {
+
+                    '0%': {
+                        opacity: '0',
+                        transform:
+                            'translateY(5px)'
+                    },
+
+                    '100%': {
+                        opacity: '1',
+                        transform:
+                            'translateY(0)'
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+};
+
+</script>
+
 </body>
 </html>
+```
